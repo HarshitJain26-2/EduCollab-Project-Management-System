@@ -1,0 +1,163 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  password           String
+  role               String    // 'guide', 'leader', 'member'
+  college            String    @default("")
+  avatar             String    @default("")
+  linkedin           String    @default("")
+  github             String    @default("")
+  resetPasswordToken String?
+  resetPasswordExpire DateTime?
+  isVerified         Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  createdTasks    Task[]       @relation("TaskCreatedBy")
+  assignedTasks   Task[]       @relation("TaskAssignedTo")
+  guidedProjects  Project[]    @relation("ProjectGuide")
+  ledProjects     Project[]    @relation("ProjectLeader")
+  projectMemberships Project[] @relation("ProjectMembers")
+  driveLinks      DriveLink[]
+  notifications   Notification[]
+  dailyUpdates    DailyUpdate[]
+  comments        Comment[]
+  createdMeetings Meeting[]    @relation("MeetingCreatedBy")
+  attendedMeetings Meeting[]   @relation("MeetingParticipants")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  guideId     String
+  guide       User     @relation("ProjectGuide", fields: [guideId], references: [id])
+  leaderId    String?
+  leader      User?    @relation("ProjectLeader", fields: [leaderId], references: [id])
+  
+  members     User[]   @relation("ProjectMembers")
+  
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("planning") // 'planning', 'active', 'on_hold', 'completed'
+  progress    Int      @default(0)
+  githubLink  String   @default("")
+  driveLinks  DriveLink[]
+  
+  tasks       Task[]
+  meetings    Meeting[]
+  dailyUpdates DailyUpdate[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DriveLink {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  url       String
+  category  String   @default("other")
+  addedById String?
+  addedBy   User?    @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  addedAt   DateTime @default(now())
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @default("")
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedToId String?
+  assignedTo  User?    @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  createdById  String?
+  createdBy   User?    @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  deadline    DateTime?
+  priority    String   @default("medium")
+  status      String   @default("not_started")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Meeting {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  date      DateTime
+  time      String
+  agenda    String   @default("")
+  meetingLink String @default("")
+  createdById String?
+  createdBy User?    @relation("MeetingCreatedBy", fields: [createdById], references: [id])
+  
+  participants User[] @relation("MeetingParticipants")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DailyUpdate {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        User     @relation(fields: [memberId], references: [id])
+  date          DateTime
+  workCompleted String
+  issuesFaced   String   @default("")
+  nextSteps     String   @default("")
+  status        String   @default("pending")
+  
+  files         File[]
+  comments      Comment[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model File {
+  id            String   @id @default(uuid())
+  updateId      String
+  update        DailyUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  filename      String
+  path          String
+  mimetype      String
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  updateId  String
+  update    DailyUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  text      String
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   
+  title     String
+  message   String
+  link      String   @default("")
+  read      Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
