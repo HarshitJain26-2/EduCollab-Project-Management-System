@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script defer="" src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1a1a1a",
+                        secondary: "#4a4a4a",
+                        accent: "#0052FF",
+                        background: "#F9FAFB",
+                        surface: "#FFFFFF",
+                        border: "#E5E7EB",
+                        "on-surface": "#111827",
+                        "on-surface-variant": "#4B5563"
+                    },
+                    fontFamily: {
+                        sans: ["Plus Jakarta Sans", "sans-serif"],
+                        serif: ["Instrument Serif", "serif"]
+                    },
+                    borderRadius: {
+                        " Alexandria": "0px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F9FAFB;
+        }
+        .editorial-title {
+            font-family: 'Instrument Serif', serif;
+            letter-spacing: -0.02em;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .active-tab {
+            color: #1a1a1a;
+            border-bottom: 2px solid #1a1a1a;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased pb-32" x-data="{ activeTab: 'overview' }">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white/80 backdrop-blur-md border-b border-gray-100">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 overflow-hidden bg-gray-100 border border-gray-200">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzV3ox2quN_9cdzM0zzg3U4Wdr0-6bduuMf0xiPts8UXMDWUDgNzmZ2dvJqrD2paaOdDDVdNqn4iz0SjL5YXxr3DAn-1bsxLb3NEo8exBddztjN_3Dn4mhY8hG-3rFfF1BlUfG_O6dP1M2DOHQpYrp7LtftYERdeB0nqRem5uhlUvgd7TE27OnzhgpPIUzWBO_bJDyqZzs9nM3DqbwgocLrDXeWgL-69bwNFnUDAEH-6_Inn5NAC83psqV6kTGLQXi2JgrDjW0kt8"/>
+</div>
+<span class="editorial-title text-2xl font-medium italic">EduCollab</span>
+</div>
+<button class="p-2.5 rounded-full hover:bg-gray-50 transition-all active:scale-90 border border-transparent hover:border-gray-200">
+<span class="material-symbols-outlined text-gray-700" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="mt-24 px-6 lg:max-w-5xl lg:mx-auto">
+<!-- Project Hero Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<span class="text-[10px] uppercase tracking-[0.2em] font-bold text-accent bg-accent/5 px-2 py-1">Active</span>
+<span class="text-xs text-on-surface-variant font-medium">Updated 2h ago</span>
+</div>
+<h1 class="editorial-title text-5xl md:text-6xl text-primary leading-tight">E-commerce Backend</h1>
+</div>
+<div class="flex gap-3">
+<button class="group flex items-center gap-2 px-5 py-3 bg-[#1a1a1a] text-white text-xs font-bold uppercase tracking-widest transition-all hover:bg-black active:scale-95 shadow-lg shadow-black/10">
+<span class="material-symbols-outlined text-[18px]">code</span>
+                        GitHub
+                        <span class="material-symbols-outlined text-xs transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+<button class="group flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-primary text-xs font-bold uppercase tracking-widest transition-all hover:border-primary active:scale-95">
+<span class="material-symbols-outlined text-[18px] text-accent">cloud</span>
+                        Drive
+                    </button>
+</div>
+</div>
+<!-- Progress -->
+<div class="space-y-3">
+<div class="flex justify-between items-baseline">
+<span class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Completion Status</span>
+<span class="editorial-title text-3xl italic text-primary">65%</span>
+</div>
+<div class="h-1 w-full bg-gray-100 overflow-hidden">
+<div class="h-full bg-accent transition-all duration-1000 ease-out" style="width: 65%"></div>
+</div>
+</div>
+</section>
+<!-- Navigation Tabs -->
+<nav class="flex overflow-x-auto gap-8 mb-12 no-scrollbar border-b border-gray-100">
+<button :class="activeTab === 'overview' ? 'active-tab' : 'text-on-surface-variant'" @click="activeTab = 'overview'" class="whitespace-nowrap pb-4 text-xs font-bold uppercase tracking-widest transition-all hover:text-primary">Overview</button>
+<button :class="activeTab === 'tasks' ? 'active-tab' : 'text-on-surface-variant'" @click="activeTab = 'tasks'" class="whitespace-nowrap pb-4 text-xs font-bold uppercase tracking-widest transition-all hover:text-primary">Tasks</button>
+<button :class="activeTab === 'updates' ? 'active-tab' : 'text-on-surface-variant'" @click="activeTab = 'updates'" class="whitespace-nowrap pb-4 text-xs font-bold uppercase tracking-widest transition-all hover:text-primary">Updates</button>
+<button :class="activeTab === 'meetings' ? 'active-tab' : 'text-on-surface-variant'" @click="activeTab = 'meetings'" class="whitespace-nowrap pb-4 text-xs font-bold uppercase tracking-widest transition-all hover:text-primary">Meetings</button>
+</nav>
+<!-- Content Area -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Main Content (Overview Tab) -->
+<div class="lg:col-span-8 space-y-12" x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-300" x-transition:enter-end="opacity-100 translate-y-0" x-transition:enter-start="opacity-0 translate-y-4">
+<div>
+<div class="flex items-center gap-2 mb-6">
+<span class="w-8 h-[1px] bg-accent"></span>
+<h2 class="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant">Project Description</h2>
+</div>
+<p class="text-xl text-on-surface leading-relaxed font-normal">
+                        A robust, scalable Node.js backend for a modern e-commerce platform. Features include high-performance product indexing with Elasticsearch, real-time order processing via Redis, and a secure JWT-based authentication flow. This project aims to support up to 50k concurrent users with sub-100ms response times for all critical endpoints.
+                    </p>
+<div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="p-6 border border-gray-100 bg-white">
+<span class="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">Architecture</span>
+<span class="font-bold text-sm">Microservices</span>
+</div>
+<div class="p-6 border border-gray-100 bg-white">
+<span class="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">Database</span>
+<span class="font-bold text-sm">PostgreSQL</span>
+</div>
+<div class="p-6 border border-gray-100 bg-white">
+<span class="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">Testing</span>
+<span class="font-bold text-sm">Jest/Supertest</span>
+</div>
+<div class="p-6 border border-gray-100 bg-white">
+<span class="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">Deployment</span>
+<span class="font-bold text-sm">Kubernetes</span>
+</div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-2">
+<span class="w-8 h-[1px] bg-accent"></span>
+<h2 class="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant">Logbook</h2>
+</div>
+<button class="text-[10px] uppercase tracking-widest font-bold text-accent hover:underline">View Ledger</button>
+</div>
+<div class="space-y-8">
+<div class="flex gap-6 items-start">
+<div class="w-1 h-1 rounded-full bg-accent mt-2 shrink-0"></div>
+<div>
+<h4 class="font-bold text-sm mb-1 uppercase tracking-wider">Infrastructure update completed</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Database migration to AWS Aurora finished successfully.</p>
+<span class="text-[9px] uppercase tracking-widest text-gray-400 mt-2 block">YESTERDAY — 16:20</span>
+</div>
+</div>
+<div class="flex gap-6 items-start">
+<div class="w-1 h-1 rounded-full bg-gray-300 mt-2 shrink-0"></div>
+<div>
+<h4 class="font-bold text-sm mb-1 uppercase tracking-wider">API Documentation updated</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Swagger docs now include the new payment gateway endpoints.</p>
+<span class="text-[9px] uppercase tracking-widest text-gray-400 mt-2 block">OCT 24, 2023 — 09:15</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty States for other tabs -->
+<div class="lg:col-span-8 py-20 text-center" x-cloak="" x-show="activeTab !== 'overview'">
+<span class="editorial-title text-4xl text-gray-300 italic">Content for <span x-text="activeTab"></span> arriving soon.</span>
+</div>
+<!-- Sidebar -->
+<div class="lg:col-span-4 space-y-12">
+<div>
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-2">
+<span class="w-6 h-[1px] bg-accent"></span>
+<h2 class="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant">Collaborators</h2>
+</div>
+<button class="text-on-surface hover:text-accent transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="person_add">person_add</span>
+</button>
+</div>
+<div class="space-y-1">
+<!-- Member List Item -->
+<div class="flex items-center gap-4 p-4 hover:bg-white border border-transparent hover:border-gray-100 transition-all cursor-pointer group">
+<img alt="Member" class="w-11 h-11 border border-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyYaym_pN0XjNHNFipU8TvfpnfKu7dN0uddxWtjC6XOP4eZpFcXwjS53nkaIq_4tY-_BCBRxTAfaMsctbZjg-WIEunlX_b9G8FX1YP-dxTCFZsO7DigDw8eZTID1eh36BFGbZpWAN76jCQAJv5IcJQAG9DMkR8X2CmM1ON14Y7cuB36qDXGiGLdydryd13cmPWOB-a4dwAj5k4FDb4cVy7tpwhMgYC9EPE2gQUW3Ghj4zi1a675XIBrODRltgyE6VkHBdFhSFdJOg"/>
+<div>
+<p class="text-xs font-bold uppercase tracking-wider group-hover:text-accent transition-colors">Alex Rivera</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Lead Backend Dev</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 hover:bg-white border border-transparent hover:border-gray-100 transition-all cursor-pointer group">
+<img alt="Member" class="w-11 h-11 border border-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeTvAOLnRLtM298uSg3t8fyUMGXp_O3Dp_6dbH4rmhe5HUfX4KgIsZzmmW6zsNSriMyX9-EedebT3yEujuqlnIYKgA1eCGdiMhH1DUMAsulR6dyIf3-3hl-WcJzhFsxQnYKCkKbZjEBBAKeCGKUBrs4fvrYjeZDD3S8A3hvW6Un1TizIVyeRG-iLldzfdhjVC69MbqPfDl4mZb54rVMjpTXDlLuVyz0k04KkneAMnZHwsezI-u2BQrikssUqfdxGJnsK8TdAs9mhc"/>
+<div>
+<p class="text-xs font-bold uppercase tracking-wider group-hover:text-accent transition-colors">Sarah Chen</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Cloud Architect</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 hover:bg-white border border-transparent hover:border-gray-100 transition-all cursor-pointer group">
+<img alt="Member" class="w-11 h-11 border border-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbKNv2XG_h7q68QCQGTqnebLtbMX3MfLUgkL98Pou_pxQbjy9vUlfVAmSY-m3u9DjGpKlSLew-lTn0i_aad8k3tG8VIlwv6XlnyBKsyP5G1P4xLa0E9fg7vEglT-qsxgmnm9KGb9Odia09vSkX0SFx-TjZYkeCUOhbHOe2YlHhu13SDEcbZ93VKt-tO5uhnr1XnIgYOQ550gu3EEbquOOth6iODqTWLz8zs1_hZlmhn9dtiwmEYfiqnw9atDjbYW2682N7V7UDs6Q"/>
+<div>
+<p class="text-xs font-bold uppercase tracking-wider group-hover:text-accent transition-colors">Marco Rossi</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">DevOps Engineer</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Call to Action Card -->
+<div class="bg-white border border-gray-100 p-8 shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-[20px] text-accent">schedule</span>
+<h2 class="text-[10px] uppercase tracking-[0.2em] font-black text-on-surface-variant">Next Briefing</h2>
+</div>
+<p class="editorial-title text-3xl mb-1 italic">Architecture Review</p>
+<p class="text-xs font-medium text-on-surface-variant mb-8 uppercase tracking-widest">Tomorrow / 10:00 — 11:30 AM</p>
+<button class="group w-full flex items-center justify-center gap-3 py-4 bg-accent text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-700 active:scale-95">
+                        Join Briefing
+                        <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-4 pb-safe bg-white border-t border-gray-100 shadow-2xl shadow-black/5">
+<a class="flex flex-col items-center gap-1.5 text-gray-400 transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="dashboard">dashboard</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-primary transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-[24px] font-variation-fill" data-icon="folder_open">folder_open</span>
+<span class="text-[9px] font-bold uppercase tracking-widest border-b-2 border-primary">Projects</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-gray-400 transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Tasks</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-gray-400 transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="history_edu">history_edu</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Journal</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-gray-400 transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="group">group</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Team</span>
+</a>
+</nav>
+</body></html>

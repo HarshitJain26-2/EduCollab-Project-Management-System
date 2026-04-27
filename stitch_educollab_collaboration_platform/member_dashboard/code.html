@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduCollab Member Dashboard</title>
+<!-- Google Fonts: Noto Serif, Inter, Public Sans -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#f9e37a",
+                    "on-primary-fixed-variant": "#00419d",
+                    "secondary-container": "#dfe3e8",
+                    "secondary-fixed": "#dfe3e8",
+                    "on-background": "#1b1c1d",
+                    "on-tertiary-fixed-variant": "#524600",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e3e2e3",
+                    "primary": "#094cb2",
+                    "tertiary-container": "#bfab49",
+                    "outline": "#737784",
+                    "on-secondary-container": "#606569",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#faf9fa",
+                    "primary-container": "#3366cc",
+                    "on-tertiary-fixed": "#211b00",
+                    "surface-container": "#efedee",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#faf9fa",
+                    "on-primary-fixed": "#001946",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#d9e2ff",
+                    "on-secondary-fixed-variant": "#42474b",
+                    "surface-dim": "#dbdadb",
+                    "tertiary": "#6d5e00",
+                    "inverse-primary": "#b1c5ff",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#e3e2e3",
+                    "on-surface": "#1b1c1d",
+                    "inverse-on-surface": "#f2f0f1",
+                    "on-surface-variant": "#434653",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#dcc661",
+                    "surface-tint": "#2259bf",
+                    "outline-variant": "#c3c6d5",
+                    "on-primary-container": "#e7ebff",
+                    "inverse-surface": "#303031",
+                    "surface-container-low": "#f5f3f4",
+                    "on-secondary-fixed": "#171c20",
+                    "secondary-fixed-dim": "#c2c7cc",
+                    "primary-fixed-dim": "#b1c5ff",
+                    "on-tertiary-container": "#4a3f00",
+                    "surface-container-high": "#e9e8e9",
+                    "on-secondary": "#ffffff",
+                    "surface": "#faf9fa",
+                    "secondary": "#5a5f63"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Noto Serif"],
+                    "display": ["Noto Serif"],
+                    "body": ["Inter"],
+                    "label": ["Public Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .serif-italic { font-family: 'Noto Serif', serif; font-style: italic; }
+        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Noto Serif', serif; }
+        .label-text { font-family: 'Public Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-low text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md docked full-width top-0 z-50 sticky">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed flex items-center justify-center">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a young scholarly student smiling warmly in a bright library setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDZzmFQ-Xs581lsbPug29s-5ukck6vTlfXv8CdOrRbcd2zSQO6qJWU5La_BBYBHBAhvEkvd9NnMjX-XzjN3ZHKsBKJV9l_l_us6C3iMcJhAcCeG4bxfNv40hm27mhtX5yx6OxH107KMQSoQ7aJEBC7L-8qp2pX8hY72W9ddKbo6mhmnLRh4rI6bRUxCh9JV0uTEOYWZQ7SOfY9RfIwjkQWKIq9-hjrZTnxHLKJV1TH1RP9U7JFZHnzCgQ8WdaFTMtkkomTLY3v2VY"/>
+</div>
+<span class="text-2xl font-serif italic text-slate-900 dark:text-slate-50">EduCollab</span>
+</div>
+<nav class="hidden md:flex gap-8 items-center h-full">
+<a class="text-blue-700 dark:text-blue-400 font-bold border-b-2 border-blue-700 h-full flex items-center transition-colors" href="#">Home</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors h-full flex items-center" href="#">Projects</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors h-full flex items-center" href="#">Tasks</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors h-full flex items-center" href="#">Updates</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors h-full flex items-center" href="#">Mentors</a>
+</nav>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-400">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 py-8 pb-24 md:pb-8">
+<!-- Hero Section: Daily Update Widget -->
+<section class="mb-10">
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary-container p-8 text-on-primary shadow-lg">
+<div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+<div>
+<h1 class="text-3xl md:text-4xl font-bold leading-tight mb-4">Good morning, Julianne.</h1>
+<p class="font-body text-primary-fixed opacity-90 text-lg mb-6 leading-relaxed max-w-md">Your collaboration pulse is at 94%. Maintain the momentum by documenting today's research findings.</p>
+<button class="bg-white text-primary px-8 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-primary-fixed transition-colors active:scale-95">
+<span class="material-symbols-outlined">history_edu</span>
+                            Submit Daily Update
+                        </button>
+</div>
+<div class="hidden md:flex justify-end">
+<div class="w-64 h-64 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center p-4 border border-white/20">
+<div class="text-center">
+<span class="block text-5xl font-bold font-headline">12</span>
+<span class="label-text text-[10px] uppercase tracking-widest font-medium opacity-80">Days Streak</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Abstract background pattern -->
+<div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-tertiary-fixed opacity-10 rounded-full blur-3xl"></div>
+</div>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Pending Tasks Column -->
+<div class="lg:col-span-8 space-y-8">
+<div class="flex items-end justify-between px-2">
+<h2 class="text-2xl font-bold">My Pending Tasks</h2>
+<a class="label-text text-primary text-xs font-semibold uppercase tracking-wider hover:underline" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<!-- High Priority -->
+<div class="bg-white rounded-xl p-6 shadow-sm flex items-center gap-6 border-l-4 border-error">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">priority_high</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-lg font-bold mb-1">Finalize Literature Review</h3>
+<p class="text-sm text-secondary font-body">Global Economic Trends Project</p>
+</div>
+<div class="text-right">
+<span class="label-text text-[10px] uppercase font-bold text-error block mb-1">Due Today</span>
+<span class="text-xs text-secondary">5:00 PM</span>
+</div>
+</div>
+<!-- Medium Priority -->
+<div class="bg-white rounded-xl p-6 shadow-sm flex items-center gap-6 border-l-4 border-tertiary">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">hourglass_top</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-lg font-bold mb-1">Upload Data Visualizations</h3>
+<p class="text-sm text-secondary font-body">Urban Planning Workshop</p>
+</div>
+<div class="text-right">
+<span class="label-text text-[10px] uppercase font-bold text-tertiary block mb-1">In 2 Days</span>
+<span class="text-xs text-secondary">Oct 24</span>
+</div>
+</div>
+<!-- Low Priority -->
+<div class="bg-white rounded-xl p-6 shadow-sm flex items-center gap-6 border-l-4 border-outline">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">playlist_add_check</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-lg font-bold mb-1">Peer Feedback: Alex's Draft</h3>
+<p class="text-sm text-secondary font-body">Journalism Ethics</p>
+</div>
+<div class="text-right">
+<span class="label-text text-[10px] uppercase font-bold text-secondary block mb-1">Next Week</span>
+<span class="text-xs text-secondary">Oct 28</span>
+</div>
+</div>
+</div>
+<!-- Personal Project Contribution Visual -->
+<div class="bg-surface-container-highest rounded-xl p-8 relative overflow-hidden">
+<h2 class="text-2xl font-bold mb-8">Project Contributions</h2>
+<div class="grid grid-cols-7 md:grid-cols-14 gap-2">
+<!-- Contribution Heatmap Mockup -->
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-surface-dim rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-surface-dim rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-surface-dim rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<!-- row 2 -->
+<div class="h-4 w-4 bg-surface-dim rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-surface-dim rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary-container rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+<div class="h-4 w-4 bg-primary rounded-sm"></div>
+</div>
+<div class="mt-8 flex flex-wrap gap-12">
+<div>
+<span class="block text-3xl font-bold font-headline text-primary">84</span>
+<span class="label-text text-[10px] uppercase font-bold text-secondary tracking-widest">Commits This Month</span>
+</div>
+<div>
+<span class="block text-3xl font-bold font-headline text-tertiary">12</span>
+<span class="label-text text-[10px] uppercase font-bold text-secondary tracking-widest">Reports Authored</span>
+</div>
+<div>
+<span class="block text-3xl font-bold font-headline text-primary-container">4</span>
+<span class="label-text text-[10px] uppercase font-bold text-secondary tracking-widest">Active Mentorships</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Column: Stats & Mentors -->
+<div class="lg:col-span-4 space-y-8">
+<!-- Scholarly Quote / Metadata Card -->
+<div class="bg-white rounded-xl p-8 border-l-4 border-tertiary shadow-sm">
+<span class="material-symbols-outlined text-tertiary mb-4" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<p class="font-serif italic text-lg leading-relaxed text-on-surface mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
+<p class="label-text text-[10px] uppercase tracking-widest font-bold text-secondary">B.B. King — Curated for you</p>
+</div>
+<!-- Mentors Activity -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-xl">Active Mentors</h3>
+<span class="material-symbols-outlined text-secondary">school</span>
+</div>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Professional portrait of a male mentor with glasses in a modern office environment with soft focus bookshelf background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXitMxAdo_rv7-d3Nd4Du4PpDKYA_WG9qyw3tFkI0GXHdmihO8-eAydKemAQHNr027LRVwK_TXvjckV-FLEIC6s70xYoBtvuoSRSxpxeUag-blCjUvh8RTOLKPCaT7zaZrjh0DRGShRxXigvIdvYTCDOFKx0DFJZPYbLuUbvB45Lh4ICG-6rPK6vw8DGHdEKZLpdrh9bz4FQaMR62PdPUhPVYc4jwWpfVmR91mV-xW0X-Baaub6c6RYkVljihxh-GI-9oxyjpQ5zA"/>
+<div>
+<p class="font-bold text-sm">Dr. Arthur Vance</p>
+<p class="text-xs text-secondary">Economic History • Online</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of a female professor in a white blazer, looking professional and approachable, clean architectural background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMjhjz-KtYj0ROkg2cPqt1yDG-5tnnK9p86QRRaxWosUePeHaGyPFN_er1s8vjZ1yeP1eRNMK2TPjsNalI3RVyxETAEjn-WYOze8kEDSuEfIky3R65wzIrJwcxLXQ8sojhXXr1zCKxSOH-OC1npS2kVnJIIH0Xgm7sB4OOhzZlAyvaGck-ENACZJ3jtNf1ge4duXx4ZeTcznNjZqIcLXNx9q56ILBMyfkd5guvK-2FFr9mm_D09rWCsafVr_pDZeoXJATwWIJmnws"/>
+<div>
+<p class="font-bold text-sm">Prof. Sarah Chen</p>
+<p class="text-xs text-secondary">Data Visualization • Offline</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">add</span>
+</div>
+<span class="text-sm font-medium text-primary">Request New Mentor</span>
+</div>
+</div>
+</div>
+<!-- Recent Feedback Card -->
+<div class="bg-secondary-container/30 rounded-xl p-6 border border-white/50 backdrop-blur-sm">
+<h3 class="font-bold text-sm label-text uppercase tracking-widest text-on-secondary-container mb-4">Latest Feedback</h3>
+<div class="p-4 bg-white rounded-lg shadow-sm">
+<p class="text-sm font-body text-on-surface mb-2">"Excellent depth in the structural analysis of your last paper. Let's discuss the bibliography..."</p>
+<div class="flex items-center justify-between mt-4">
+<span class="text-[10px] label-text font-bold text-secondary uppercase">Dr. Arthur Vance</span>
+<span class="text-[10px] label-text text-secondary">2h ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB for Submit Update -->
+<button class="fixed bottom-24 right-6 md:bottom-8 md:right-8 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50 group">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">add</span>
+<span class="absolute right-20 bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none label-text uppercase tracking-widest">Submit Update</span>
+</button>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-t-xl flex justify-around items-center pb-safe pt-2 border-t border-slate-100/10">
+<a class="flex flex-col items-center justify-center text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg py-1 px-3 h-full" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] uppercase tracking-widest font-medium Public Sans mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 py-1 px-3 hover:text-blue-600 dark:hover:text-blue-300" href="#">
+<span class="material-symbols-outlined">folder_special</span>
+<span class="text-[10px] uppercase tracking-widest font-medium Public Sans mt-1">Projects</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 py-1 px-3 hover:text-blue-600 dark:hover:text-blue-300" href="#">
+<span class="material-symbols-outlined">task</span>
+<span class="text-[10px] uppercase tracking-widest font-medium Public Sans mt-1">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 py-1 px-3 hover:text-blue-600 dark:hover:text-blue-300" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="text-[10px] uppercase tracking-widest font-medium Public Sans mt-1">Updates</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 py-1 px-3 hover:text-blue-600 dark:hover:text-blue-300" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="text-[10px] uppercase tracking-widest font-medium Public Sans mt-1">Mentors</span>
+</a>
+</nav>
+</body></html>

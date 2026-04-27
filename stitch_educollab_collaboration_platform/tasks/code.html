@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduCollab - Task Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary-container": "#394687",
+                        "primary-fixed": "#dee0ff",
+                        "on-tertiary-container": "#ffc7a2",
+                        "surface-dim": "#d8dadd",
+                        "secondary": "#4d5a9c",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c5c5d4",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#bac3ff",
+                        "tertiary": "#6c3400",
+                        "background": "#f7f9fc",
+                        "secondary-fixed-dim": "#b9c3ff",
+                        "tertiary-container": "#8f4700",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdcc6",
+                        "inverse-surface": "#2d3133",
+                        "outline": "#757684",
+                        "on-secondary-fixed": "#021355",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef1",
+                        "on-primary-container": "#cacfff",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb784",
+                        "surface": "#f7f9fc",
+                        "on-primary-fixed": "#00105c",
+                        "inverse-primary": "#bac3ff",
+                        "surface-bright": "#f7f9fc",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "secondary-fixed": "#dee1ff",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "primary": "#24389c",
+                        "surface-tint": "#4355b9",
+                        "secondary-container": "#abb7ff",
+                        "primary-container": "#3f51b5",
+                        "surface-container-high": "#e6e8eb",
+                        "on-primary-fixed-variant": "#293ca0",
+                        "surface-container-highest": "#e0e3e6",
+                        "surface-variant": "#e0e3e6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#354282",
+                        "surface-container-low": "#f2f4f7",
+                        "on-surface-variant": "#454652"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "xl": "48px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                        "h2": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h2": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen pb-32">
+<!-- TopAppBar from JSON -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-slate-800/50 shadow-lg shadow-indigo-500/5">
+<div class="flex items-center gap-3">
+<img alt="Profile" class="w-8 h-8 rounded-full border border-indigo-100" data-alt="Portrait of a young professional male educator with glasses and a friendly expression, soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDELNISig64oyx30WsLlgMQVDWItWB7fVAQcVsVxV1ZYp0x4lZ8IotiUKBGrZ9k8ZvPYJZyCfmaDo7rARikoZDvv93fLDV6RyyMJWD61YhMWJI6Jt6ZWkB8tbKP6W1y0fBQdKBRqs2m9DX1CrlEuuUQvG3pfxKRnZhsZEVNPiSC-FUwHpnhkLryQxWCDWVSEYNLscy1qJTP0AmKvSOeXffEAaucto97G84lTh4Mo_KsY_B-HsuM0ud5XKrNwBfdMOHH6TRI1xk7uO8"/>
+<h1 class="text-xl font-black text-indigo-600 dark:text-indigo-400 font-['Inter'] tracking-tight">EduCollab</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-container-margin max-w-7xl mx-auto">
+<!-- Title and View Toggles -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-lg gap-md">
+<div>
+<h2 class="font-h1 text-h1 text-primary mb-xs">Task Management</h2>
+<p class="font-body-md text-on-surface-variant">Streamline your academic collaboration and tracking.</p>
+</div>
+<div class="inline-flex p-1 bg-surface-container-high rounded-xl self-start">
+<button class="px-md py-sm bg-white shadow-sm rounded-lg flex items-center gap-sm text-primary font-bold transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="view_kanban">view_kanban</span>
+<span class="font-label-sm">Kanban</span>
+</button>
+<button class="px-md py-sm rounded-lg flex items-center gap-sm text-on-surface-variant hover:bg-white/50 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="list">list</span>
+<span class="font-label-sm">List</span>
+</button>
+</div>
+</div>
+<!-- Kanban Board Layout -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg overflow-x-auto pb-4 custom-scrollbar">
+<!-- Column: Not Started -->
+<div class="flex flex-col gap-md min-w-[320px]">
+<div class="flex items-center justify-between px-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-slate-300"></span>
+<h3 class="font-h2 text-[18px] uppercase tracking-wider text-slate-500">Not Started</h3>
+<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">3</span>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<div class="flex flex-col gap-md">
+<!-- Task Card 1 -->
+<article class="bg-white p-md rounded-xl shadow-[0_4px_12px_rgba(63,81,181,0.04)] border border-surface-container hover:shadow-lg hover:shadow-indigo-500/5 transition-all group">
+<div class="flex justify-between items-start mb-sm">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-red-100 text-red-600">High</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+</div>
+<h4 class="font-h2 text-[16px] text-on-surface mb-md">Research Methodology Framework</h4>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-outline text-[12px] font-medium">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span>
+<span>Oct 24</span>
+</div>
+<img alt="Assignee" class="w-6 h-6 rounded-full ring-2 ring-white" data-alt="Close up of a female student with a focused expression, soft natural window light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBW0dHns4bb2nREI_-46_YuUB51fKVRFnOfTqEg9AfV5vcYXhwZkQHtOoq1LVOeTSi6PAJOTPGhltQYuNyreIcB-nVwfnyKaJwKDx2F4eLaaMgLJjhNV11K4iC5V-O0zxFTdsDFnMtpgd4dHaiUbrBKxo6lLiwgN1Q8RCw-vnzWQq9EGb0NVayRepSG3SM4iW12ct3JyNKj3f71LKASggKLe0SZxrcSY45500Jnq_We5yB_A5pPGhCpOZBFM1FH_Gkut210Atw49wI"/>
+</div>
+</article>
+<!-- Task Card 2 -->
+<article class="bg-white p-md rounded-xl shadow-[0_4px_12px_rgba(63,81,181,0.04)] border border-surface-container hover:shadow-lg hover:shadow-indigo-500/5 transition-all group">
+<div class="flex justify-between items-start mb-sm">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-blue-100 text-blue-600">Med</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+</div>
+<h4 class="font-h2 text-[16px] text-on-surface mb-md">Bibliography Compilation</h4>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-outline text-[12px] font-medium">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span>
+<span>Oct 28</span>
+</div>
+<img alt="Assignee" class="w-6 h-6 rounded-full ring-2 ring-white" data-alt="Profile of a male academic professional with a subtle smile, warm interior lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzvPBxESeCMQhcPikUuUSadrVUwsrN0MPPRTZqSFrQiVDQ8R5fd2DOki3FaFZsokbVY1KUlxOamP7Fih3W8Oj1uceVht3IUq9RxYhmi1dH8xU76bIWZAHMM1s0gLVi2pFheaMeScPw9Xf8GF8YItOI9I3phllAp4q0h_ZmqxsjMbed2PEMtP_bA4hUBS8asl7_WgEtzvOqdGqq8jBp9EudPPNM5DaDmgBThxJZCcP8DZ_ffin59aXC942Fy5dcdnLT-WeVQBS6NM0"/>
+</div>
+</article>
+</div>
+</div>
+<!-- Column: In Progress -->
+<div class="flex flex-col gap-md min-w-[320px]">
+<div class="flex items-center justify-between px-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<h3 class="font-h2 text-[18px] uppercase tracking-wider text-primary">In Progress</h3>
+<span class="bg-primary-fixed text-primary px-2 py-0.5 rounded-full text-xs font-bold">2</span>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<div class="flex flex-col gap-md">
+<!-- Task Card 3 -->
+<article class="bg-white p-md rounded-xl shadow-[0_4px_12px_rgba(63,81,181,0.04)] border border-primary/10 hover:shadow-lg hover:shadow-indigo-500/8 transition-all group">
+<div class="flex justify-between items-start mb-sm">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-red-100 text-red-600">High</span>
+<div class="flex -space-x-2">
+<img alt="Team" class="w-6 h-6 rounded-full ring-2 ring-white" data-alt="Portrait of a young female researcher in a modern library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxgskVIxaUDuRTrFzsXHgzdHiojfKpHobbD709aPiaR5ufFGJ6dyaVpbOv3RhiYGnFD3It-Jd1L29RqYf7-vX3NpfNz55eXB2FpqDnoA_7TsWi9DXgwwtJUSfJs3e6A6mPohB7GS8m0oawzqs3U4zXifgywrT_EwEd-JtcUGuTLV0m_IHICVM8_USp_XCqEDPrgSHl-Tz9qLUFeV1dvMAmzlVCBcW4_4SXLdJ5lbiy5FUiRSyc9H_NJC9nX1qdntSOIcIYCFtWiLE"/>
+<img alt="Team" class="w-6 h-6 rounded-full ring-2 ring-white" data-alt="Close up of a young man smiling, professional academic headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB730zeuLBoGXvPvSPOtsRaRQ6GiJLLYsmLof7GKu_ooQRxMAznoUQTpQ-HMaHTT8rnEuvlIyxey9KoI4JKrDWntLC7qcPQZa4B3cXX_bNJDLr8c9hZ3x8wor0uzljA8-fF2lzSQ3m_pizcH5SE0FkhRHinuw0W17eOJc2_EqKOFJleM7SqeYAEj4MWxeha8M83zc2BM8FoZdFQNlkRMTJTzAA7JR8YX5WgWcowTFbQOo_Kv9aup01PifFMMdSBPHB3yRq1sIYOaIA"/>
+</div>
+</div>
+<h4 class="font-h2 text-[16px] text-on-surface mb-md">Data Analysis Visualization</h4>
+<div class="mb-md">
+<div class="flex justify-between text-[11px] font-bold text-outline mb-1">
+<span>Progress</span>
+<span>65%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5">
+<div class="bg-primary h-1.5 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="flex items-center gap-xs text-outline text-[12px] font-medium">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span>
+<span>Tomorrow</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Column: Done -->
+<div class="flex flex-col gap-md min-w-[320px]">
+<div class="flex items-center justify-between px-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+<h3 class="font-h2 text-[18px] uppercase tracking-wider text-emerald-600">Done</h3>
+<span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-xs font-bold">12</span>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<div class="flex flex-col gap-md">
+<!-- Task Card 4 (Completed) -->
+<article class="bg-surface-container-low p-md rounded-xl border border-surface-container group opacity-80">
+<div class="flex justify-between items-start mb-sm">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-700">Low</span>
+<span class="material-symbols-outlined text-emerald-500" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h4 class="font-h2 text-[16px] text-on-surface-variant line-through mb-md">Literature Review Draft</h4>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-outline text-[12px] font-medium">
+<span class="material-symbols-outlined text-[16px]" data-icon="task_alt">task_alt</span>
+<span>Completed Oct 18</span>
+</div>
+</div>
+</article>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-indigo-500/40 flex items-center justify-center transition-transform hover:scale-110 active:scale-90 z-40 group">
+<span class="material-symbols-outlined text-[28px]" data-icon="add">add</span>
+<span class="absolute right-full mr-4 bg-primary px-3 py-1.5 rounded-lg text-white font-label-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Create Task</span>
+</button>
+<!-- BottomNavBar from JSON -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg rounded-t-2xl border-t border-indigo-100/10 shadow-[0_-4px_12px_rgba(63,81,181,0.08)]">
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[11px] font-medium font-['Inter']">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span class="text-[11px] font-medium font-['Inter']">Projects</span>
+</a>
+<!-- ACTIVE TAB -->
+<a class="flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/30 rounded-xl px-3 py-1 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
+<span class="text-[11px] font-medium font-['Inter']">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="text-[11px] font-medium font-['Inter']">Updates</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[11px] font-medium font-['Inter']">Mentors</span>
+</a>
+</nav>
+</body></html>

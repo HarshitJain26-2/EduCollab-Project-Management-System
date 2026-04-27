@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#301400",
+                      "on-secondary-container": "#394687",
+                      "primary-fixed": "#dee0ff",
+                      "on-tertiary-container": "#ffc7a2",
+                      "surface-dim": "#d8dadd",
+                      "secondary": "#4d5a9c",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#c5c5d4",
+                      "error-container": "#ffdad6",
+                      "primary-fixed-dim": "#bac3ff",
+                      "tertiary": "#6c3400",
+                      "background": "#f7f9fc",
+                      "secondary-fixed-dim": "#b9c3ff",
+                      "tertiary-container": "#8f4700",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#ffdcc6",
+                      "inverse-surface": "#2d3133",
+                      "outline": "#757684",
+                      "on-secondary-fixed": "#021355",
+                      "on-background": "#191c1e",
+                      "surface-container": "#eceef1",
+                      "on-primary-container": "#cacfff",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#eff1f4",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb784",
+                      "surface": "#f7f9fc",
+                      "on-primary-fixed": "#00105c",
+                      "inverse-primary": "#bac3ff",
+                      "surface-bright": "#f7f9fc",
+                      "on-tertiary-fixed-variant": "#713700",
+                      "secondary-fixed": "#dee1ff",
+                      "on-surface": "#191c1e",
+                      "on-primary": "#ffffff",
+                      "primary": "#24389c",
+                      "surface-tint": "#4355b9",
+                      "secondary-container": "#abb7ff",
+                      "primary-container": "#3f51b5",
+                      "surface-container-high": "#e6e8eb",
+                      "on-primary-fixed-variant": "#293ca0",
+                      "surface-container-highest": "#e0e3e6",
+                      "surface-variant": "#e0e3e6",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#354282",
+                      "surface-container-low": "#f2f4f7",
+                      "on-surface-variant": "#454652"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "xl": "48px",
+                      "md": "16px",
+                      "sm": "8px",
+                      "gutter": "16px",
+                      "xs": "4px",
+                      "lg": "24px",
+                      "container-margin": "16px"
+              },
+              "fontFamily": {
+                      "h2": ["Inter"],
+                      "h1": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "h2": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, #3f51b5 10%, #3f51b5 90%, transparent);
+            opacity: 0.2;
+        }
+        @media (min-width: 768px) {
+            .timeline-line::before {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-lg shadow-indigo-500/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="user profile" class="w-full h-full object-cover" data-alt="portrait of a young professional smiling softly with a neutral blurred office background, high key lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc4bdj3DPyS4aOaH5hv6fwtlt1FNM8krXPlZmcNK4k71XbcVamcuDpIMsR9SJAP6zskVe-9e86v8q-4wxb8Gy0hygUY83dXU86dILhn8FEYfONjvTIuE6R0aiw47hMCmFpml_UdTFB27j_aEZiK-4A7AjAf_90Og-f8kE6sgQAHvQF_MTyZIG8XyGPt7pjREq-N2POFlkiujN1n2gg1Lr7qCvITcpU0H8nPrRUs2kxwcezdkslYAF4waCp7AmhIQAwfquyS4pYIZ4"/>
+</div>
+<h1 class="text-xl font-black text-indigo-600 font-['Inter'] tracking-tight">EduCollab</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-indigo-50/50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-indigo-600">notifications</span>
+</button>
+</header>
+<main class="pt-24 px-4 max-w-5xl mx-auto relative">
+<!-- Header Section -->
+<div class="mb-lg">
+<h2 class="font-h1 text-h1 text-primary">Daily Updates Feed</h2>
+<p class="font-body-md text-on-surface-variant mt-xs">Stay synchronized with your team's academic progress.</p>
+</div>
+<!-- Timeline Container -->
+<div class="relative space-y-lg timeline-line">
+<!-- Update Card 1 (Left Aligned on Desktop) -->
+<div class="relative flex flex-col md:flex-row md:justify-start items-center md:items-start group">
+<div class="hidden md:block absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-primary rounded-full border-4 border-surface shadow-md z-10 mt-6"></div>
+<div class="w-full md:w-[45%] glass-card rounded-xl p-md shadow-lg shadow-indigo-500/5 hover:shadow-indigo-500/10 transition-all">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-2">
+<img alt="Sarah Jenkins" class="w-8 h-8 rounded-full object-cover" data-alt="Close up of a woman with curly hair wearing glasses, smiling warmly in a bright indoor setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB453LSSM54dGkmDhjBcX8LRksWCP6rBIwGXWwdPLicmfRA2x_h-AqET0FWU8AOzJDONpm6wYu9QwuuVV3Vi_LPYIA7O5una-Bgecboi_ciVF5JMB33bDIDHBaUASIbBylg2ZrO6mMtmVojisl5BQCOUMZW6y09WDSNdgQ2WUvWIZwjV4Z6S72G1vMHJHdBAv-j9hMOIl_5YLB-NAgV64QxtHdCbzVPTAuQVX4pmbx3hvEUlp5bcgXul7H3K_jirSj5PE3IZGrk-M"/>
+<div>
+<p class="font-label-sm text-primary">Sarah Jenkins</p>
+<p class="text-[10px] text-on-surface-variant">Today, 09:45 AM</p>
+</div>
+</div>
+<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">On Track</span>
+</div>
+<div class="space-y-md">
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Work Completed</h4>
+<p class="font-body-md text-on-surface text-sm">Finalized the literature review for the Neural Networks project. Integrated 15 new citations from the latest journals.</p>
+</div>
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Issues Faced</h4>
+<p class="font-body-md text-on-surface text-sm">Access denied for the IEEE Xplore library portal. Had to use alternative proxies.</p>
+</div>
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Next Steps</h4>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<p class="font-body-md text-sm font-medium">Drafting the methodology section and data collection parameters.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Update Card 2 (Right Aligned on Desktop) -->
+<div class="relative flex flex-col md:flex-row md:justify-end items-center md:items-start group">
+<div class="hidden md:block absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-tertiary rounded-full border-4 border-surface shadow-md z-10 mt-6"></div>
+<div class="w-full md:w-[45%] glass-card rounded-xl p-md shadow-lg shadow-indigo-500/5 hover:shadow-indigo-500/10 transition-all">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-2">
+<img alt="Alex Rivera" class="w-8 h-8 rounded-full object-cover" data-alt="Portrait of a young man with a short beard and stylish glasses, outdoor natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4iwvyivfIOCAu3xVG9t3azRVHBF2m_SeH9jtibrPTlO0JiCB9qgFlKujVN5RM_kOFaZjCbe7cKlMxqFgU_PpvrZS0wSWz3HMNjfELtII4PZyyuKJKr4ZhCZiTVdBXs_ELQZt_Gtu8sKwNhc5csUlbjyIKMc3PQ5gY-eoDOgoGW4arOq8z0wTuUwZEDeyGlURU967omKfiEw9oTRECLxzf8BaiO-RrPGUg21Ljaa6yUNSPd2wWKO9lcsdBIerMu6jgkcpwWYMVPmI"/>
+<div>
+<p class="font-label-sm text-primary">Alex Rivera</p>
+<p class="text-[10px] text-on-surface-variant">Today, 08:20 AM</p>
+</div>
+</div>
+<span class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Attention</span>
+</div>
+<div class="space-y-md">
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Work Completed</h4>
+<p class="font-body-md text-on-surface text-sm">Successfully deployed the data visualization dashboard prototype using Tailwind and D3.js.</p>
+</div>
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Issues Faced</h4>
+<p class="font-body-md text-on-surface text-sm italic">Large dataset loading times are exceeding 5 seconds. Performance optimization required on the backend.</p>
+</div>
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Next Steps</h4>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<p class="font-body-md text-sm font-medium">Refactoring the data ingestion pipeline and implementing lazy loading.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Update Card 3 (Left Aligned on Desktop) -->
+<div class="relative flex flex-col md:flex-row md:justify-start items-center md:items-start group">
+<div class="hidden md:block absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-primary rounded-full border-4 border-surface shadow-md z-10 mt-6"></div>
+<div class="w-full md:w-[45%] glass-card rounded-xl p-md shadow-lg shadow-indigo-500/5 hover:shadow-indigo-500/10 transition-all">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-2">
+<img alt="Marcus Chen" class="w-8 h-8 rounded-full object-cover" data-alt="Professional portrait of a middle-aged man in a studio setting, soft shadows, intelligent expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCtO0CKhIGgjeDyQyRHqgjsxKdQHiEIJOVG8S-Df78uq3QzlnlxfSgLFzobq-iq1ZckbEo0EZvtkU-tsKu4GmOhRYQJcogfdgfERkvoVuCMXHolqT8SdJqcFTo7QrseHPl5_N2DvB-3gouGPkzQVNV1ywNI6wKXWjoU8CT2AZr3UDyxxC5TFamjLXkFIk_SaOo_qUl_PGONxBroIAQ5KNxVCv_4Jt172Zqq_B6kJua1wlj-31net_oOUVZvolUAYOj6GRCFe3wQyg"/>
+<div>
+<p class="font-label-sm text-primary">Marcus Chen</p>
+<p class="text-[10px] text-on-surface-variant">Yesterday, 11:15 PM</p>
+</div>
+</div>
+<span class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Completed</span>
+</div>
+<div class="space-y-md">
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Work Completed</h4>
+<p class="font-body-md text-on-surface text-sm">Finished the peer review for the collaborative thesis. All 4 chapters reviewed and feedback sent.</p>
+</div>
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Issues Faced</h4>
+<p class="font-body-md text-on-surface text-sm">Some inconsistencies in the statistical analysis part. Needs a second look by the team lead.</p>
+</div>
+<div>
+<h4 class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Next Steps</h4>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<p class="font-body-md text-sm font-medium">Scheduling a team meeting to discuss the review findings.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-2xl shadow-xl shadow-indigo-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+<span class="sr-only">Submit Update</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-white/80 backdrop-blur-lg border-t border-indigo-100/10 shadow-[0_-4px_12px_rgba(63,81,181,0.08)] rounded-t-2xl">
+<div class="flex flex-col items-center justify-center text-slate-400 hover:text-indigo-500 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[11px] font-medium font-['Inter']">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 hover:text-indigo-500 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="text-[11px] font-medium font-['Inter']">Projects</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 hover:text-indigo-500 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+<span class="text-[11px] font-medium font-['Inter']">Tasks</span>
+</div>
+<div class="flex flex-col items-center justify-center text-indigo-600 bg-indigo-50/50 rounded-xl px-3 py-1 active:scale-90 duration-200">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="text-[11px] font-medium font-['Inter']">Updates</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 hover:text-indigo-500 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[11px] font-medium font-['Inter']">Mentors</span>
+</div>
+</nav>
+</body></html>
