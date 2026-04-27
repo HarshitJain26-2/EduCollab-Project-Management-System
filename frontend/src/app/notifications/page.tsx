@@ -1,98 +1,99 @@
 'use client';
 import { useEffect, useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import api from '@/lib/axios';
-import toast from 'react-hot-toast';
-import { Bell, CheckCheck, BellOff } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import AppLayout from '@/components/ui/AppLayout';
+import { useAuth } from '@/context/AuthContext';
+import axios from 'axios';
 
-const NOTIF_ICONS: Record<string, string> = {
-    task_assigned: '📋', meeting_scheduled: '📅', deadline_approaching: '⏰',
-    update_approved: '✅', update_revision: '🔄', guide_comment: '💬', project_added: '🚀', general: '🔔',
-};
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+}
 
 export default function NotificationsPage() {
-    const [notifications, setNotifications] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const { token } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => { fetchNotifications(); }, []);
-
-    const fetchNotifications = () => {
-        setLoading(true);
-        api.get('/notifications').then(r => setNotifications(r.data.notifications || []))
-            .catch(() => toast.error('Failed to load notifications')).finally(() => setLoading(false));
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get(`${API}/notifications`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(res.data?.notifications || res.data || []);
+      } catch {
+        setNotifications([]);
+      } finally {
+        setLoading(false);
+      }
     };
+    if (token) fetchNotifications();
+  }, [token]);
 
-    const markRead = async (id: string) => {
-        await api.patch(`/notifications/${id}/read`).catch(() => { });
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    };
+  const markAllAsRead = async () => {
+    try {
+      await axios.patch(`${API}/notifications/read-all`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+    } catch { /* silent */ }
+  };
 
-    const markAllRead = async () => {
-        await api.patch('/notifications/read-all').catch(() => toast.error('Failed'));
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        toast.success('All notifications marked as read');
-    };
+  return (
+    <AppLayout>
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-[--primary] mb-1">Notifications</h1>
+          <p className="text-[--on-surface-variant]">Stay updated with your team's latest activities.</p>
+        </div>
+        <button 
+          onClick={markAllAsRead}
+          className="text-[--primary] label-text text-xs font-bold uppercase tracking-widest hover:underline"
+        >
+          Mark all as read
+        </button>
+      </div>
 
-    const displayed = filter === 'unread' ? notifications.filter(n => !n.read) : notifications;
-    const unreadCount = notifications.filter(n => !n.read).length;
-
-    if (loading) return <DashboardLayout><div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" style={{ width: 40, height: 40 }} /></div></DashboardLayout>;
-
-    return (
-        <DashboardLayout>
-            <div className="animate-fadeIn">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-                    <div>
-                        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Notifications</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{unreadCount} unread</p>
-                    </div>
-                    {unreadCount > 0 && (
-                        <button className="btn btn-secondary" onClick={markAllRead}><CheckCheck size={16} /> Mark all read</button>
-                    )}
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-24 shadow-sm border border-slate-100" />)}
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="bg-white rounded-xl p-16 text-center shadow-sm">
+          <span className="material-symbols-outlined text-5xl text-slate-200 mb-4 block">notifications_none</span>
+          <h3 className="text-xl font-bold mb-2">No notifications</h3>
+          <p className="text-[--on-surface-variant]">You're all caught up!</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {notifications.map((n) => (
+            <div key={n.id} className={`p-5 rounded-2xl border transition-all ${n.read ? 'bg-white border-slate-100 opacity-60' : 'bg-blue-50/50 border-blue-100 shadow-sm shadow-blue-500/5'}`}>
+              <div className="flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${n.read ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
+                  <span className="material-symbols-outlined text-[20px]">
+                    {n.type === 'task' ? 'task' : n.type === 'update' ? 'history_edu' : 'notifications'}
+                  </span>
                 </div>
-
-                <div className="tabs">
-                    <div className={`tab ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({notifications.length})</div>
-                    <div className={`tab ${filter === 'unread' ? 'active' : ''}`} onClick={() => setFilter('unread')}>Unread ({unreadCount})</div>
+                <div className="flex-grow">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-bold text-sm">{n.title}</h3>
+                    <span className="text-[10px] label-text text-slate-400">
+                      {new Date(n.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[--on-surface-variant] leading-relaxed">{n.message}</p>
                 </div>
-
-                {displayed.length === 0 ? (
-                    <div className="empty-state card" style={{ padding: 60 }}>
-                        <BellOff size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 20px' }} />
-                        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                            {filter === 'unread' ? 'All caught up! 🎉' : 'No notifications yet'}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        {displayed.map((n: any, i) => (
-                            <div
-                                key={n.id}
-                                className={`notif-item ${!n.read ? 'unread' : ''}`}
-                                onClick={() => !n.read && markRead(n.id)}
-                                style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '16px 20px', borderBottom: i < displayed.length - 1 ? '1px solid var(--border-light)' : 'none' }}
-                            >
-                                <div style={{ width: 42, height: 42, borderRadius: 12, background: !n.read ? 'rgba(108,99,255,0.15)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
-                                    {NOTIF_ICONS[n.type] || '🔔'}
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                                        <div style={{ fontWeight: !n.read ? 700 : 500, fontSize: 14, color: 'var(--text-primary)' }}>{n.title}</div>
-                                        <div style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}</div>
-                                    </div>
-                                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{n.message}</div>
-                                    {!n.read && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                                        <div className="notif-dot" style={{ width: 6, height: 6 }} />
-                                        <span style={{ fontSize: 11, color: 'var(--accent-secondary)', fontWeight: 600 }}>Unread — click to mark as read</span>
-                                    </div>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+              </div>
             </div>
-        </DashboardLayout>
-    );
+          ))}
+        </div>
+      )}
+    </AppLayout>
+  );
 }

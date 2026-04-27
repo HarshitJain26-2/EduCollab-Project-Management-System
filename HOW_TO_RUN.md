@@ -24,6 +24,19 @@ cd "C:\Users\jainh\Desktop\New folder"
 
 The backend API will run on **http://localhost:5000**.
 
+## Start the Frontend Application
+
+The frontend is a modern Next.js application built with the Stitch-by-Google design system.
+
+**Terminal:**
+```powershell
+cd "C:\Users\jainh\Desktop\New folder\frontend"
+npm install
+npm run dev
+```
+
+The frontend will run on **http://localhost:3000**.
+
 ---
 
 ## Backend API Endpoints
@@ -40,4 +53,4 @@ The backend API will run on **http://localhost:5000**.
 | Notifications | /api/notifications |
 | Health Check | http://localhost:5000/api/health |
 
-*Note: The Next.js frontend has been removed to transition the UI to a mobile app.*
+*Note: The frontend has been rebuilt using Next.js 16 and Tailwind CSS v4, featuring role-based dashboards and a mobile-first design.*

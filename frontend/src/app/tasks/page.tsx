@@ -1,299 +1,294 @@
 'use client';
 import { useEffect, useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import AppLayout from '@/components/ui/AppLayout';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/axios';
-import socket from '@/lib/socket';
+import Modal from '@/components/ui/Modal';
+import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Plus, X, CheckSquare, Circle, Clock, CheckCircle } from 'lucide-react';
-import { format } from 'date-fns';
-import CustomSelect from '@/components/ui/CustomSelect';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'not_started' | 'in_progress' | 'done';
+  priority: 'high' | 'medium' | 'low';
+  deadline?: string;
+  assignedTo?: { id: string; name: string; avatar?: string };
+  progress?: number;
+}
+
+const PRIORITY_BADGE: Record<string, string> = {
+  high: 'bg-red-100 text-red-600',
+  medium: 'bg-blue-100 text-blue-600',
+  low: 'bg-green-100 text-green-700',
+};
 
 const COLUMNS = [
-    { key: 'not_started', label: 'Not Started', color: '#475569', bg: 'rgba(71,85,105,0.1)', icon: Circle },
-    { key: 'in_progress', label: 'In Progress', color: '#22d3ee', bg: 'rgba(34,211,238,0.1)', icon: Clock },
-    { key: 'completed', label: 'Completed', color: '#34d399', bg: 'rgba(52,211,153,0.1)', icon: CheckCircle },
-];
-
-import { useSocket } from '@/context/SocketContext';
+  { key: 'not_started', label: 'Not Started', dotColor: 'bg-slate-300', textColor: 'text-slate-500', badgeCls: 'bg-slate-100 text-slate-600' },
+  { key: 'in_progress', label: 'In Progress', dotColor: 'bg-[--primary-container]', textColor: 'text-[--primary]', badgeCls: 'bg-[--primary-fixed] text-[--primary]' },
+  { key: 'done', label: 'Done', dotColor: 'bg-emerald-500', textColor: 'text-emerald-600', badgeCls: 'bg-emerald-50 text-emerald-600' },
+] as const;
 
 export default function TasksPage() {
-    const { user } = useAuth();
-    const { socket } = useSocket();
-    const [tasks, setTasks] = useState<any[]>([]);
-    const [projects, setProjects] = useState<any[]>([]);
-    const [allUsers, setAllUsers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState({ title: '', description: '', project: '', assignedTo: '', deadline: '', priority: 'medium', status: 'not_started' });
-    const [saving, setSaving] = useState(false);
-    const [selectedProject, setSelectedProject] = useState('');
-    const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+  const { token, user } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [view, setView] = useState<'kanban' | 'list'>('kanban');
+  const [form, setForm] = useState({ title: '', description: '', priority: 'medium', deadline: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-    const fetchAll = () => {
-        setLoading(true);
-        Promise.all([
-            api.get('/tasks'),
-            api.get('/projects'),
-            user?.role !== 'member' ? api.get('/users') : Promise.resolve({ data: { users: [] } })
-        ]).then(([tRes, pRes, uRes]) => {
-            const fetchedTasks = tRes.data.tasks || [];
-            const fetchedProjects = pRes.data.projects || [];
-            setTasks(fetchedTasks);
-            setProjects(fetchedProjects);
-            setAllUsers(uRes.data.users || []);
+  const fetchTasks = async () => {
+    try {
+      const res = await axios.get(`${API}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+      setTasks(res.data?.tasks || res.data || []);
+    } catch {
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            // Auto-select if only one project
-            if (fetchedProjects.length === 1) {
-                setSelectedProject(fetchedProjects[0].id);
-                setForm(prev => ({ ...prev, project: fetchedProjects[0].id }));
-            }
-        }).catch(() => toast.error('Failed to load tasks'))
-        .finally(() => setLoading(false));
-    };
+  useEffect(() => { if (token) fetchTasks(); }, [token]);
 
-    useEffect(() => {
-        fetchAll();
-    }, [user]);
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) return toast.error('Task title is required');
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`${API}/tasks`, form, { headers: { Authorization: `Bearer ${token}` } });
+      setTasks((prev) => [res.data?.task || res.data, ...prev]);
+      toast.success('Task created!');
+      setCreateOpen(false);
+      setForm({ title: '', description: '', priority: 'medium', deadline: '' });
+    } catch {
+      toast.error('Failed to create task');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    // Live real-time updates
-    useEffect(() => {
-        if (!socket) return;
+  const moveTask = async (id: string, newStatus: Task['status']) => {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+    try {
+      await axios.patch(`${API}/tasks/${id}`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+    } catch {
+      toast.error('Failed to update status');
+      fetchTasks();
+    }
+  };
 
-        const handleTaskAdded = () => fetchAll();
-        const handleTaskUpdated = ({ taskId, status }: any) => {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
-        };
-        const handleNotification = () => {
-            // Notifications are handled globally in SocketContext, but we can also refresh state here
-        };
+  const getColumn = (status: string) => tasks.filter((t) => t.status === status);
 
-        socket.on('task_added', handleTaskAdded);
-        socket.on('task_updated', handleTaskUpdated);
-        socket.on('notification_received', handleNotification);
+  return (
+    <AppLayout>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-[--primary] mb-1">Task Management</h1>
+          <p className="text-[--on-surface-variant]">Streamline your academic collaboration and tracking.</p>
+        </div>
+        <div className="inline-flex p-1 bg-[--surface-container-high] rounded-xl self-start">
+          <button
+            onClick={() => setView('kanban')}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all ${view === 'kanban' ? 'bg-white shadow-sm text-[--primary] font-bold' : 'text-[--on-surface-variant] hover:bg-white/50'}`}
+          >
+            <span className="material-symbols-outlined text-[18px]">view_kanban</span>
+            Kanban
+          </button>
+          <button
+            onClick={() => setView('list')}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all ${view === 'list' ? 'bg-white shadow-sm text-[--primary] font-bold' : 'text-[--on-surface-variant] hover:bg-white/50'}`}
+          >
+            <span className="material-symbols-outlined text-[18px]">list</span>
+            List
+          </button>
+        </div>
+      </div>
 
-        return () => {
-            socket.off('task_added', handleTaskAdded);
-            socket.off('task_updated', handleTaskUpdated);
-            socket.off('notification_received', handleNotification);
-        };
-    }, [socket]);
-
-    const filteredTasks = selectedProject ? tasks.filter(t => t.project?.id === selectedProject || t.project === selectedProject) : tasks;
-
-    // Check if the current user can change a task's status
-    const canChangeStatus = (task: any) => {
-        if (!user) return false;
-        if (user.role === 'guide' || user.role === 'leader') return true;
-        // Member can change status only if the task is assigned to them
-        const assignedId = task.assignedTo?.id || task.assignedTo;
-        return String(assignedId) === String(user.id);
-    };
-
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-            await api.post('/tasks', form);
-            toast.success('Task created!');
-            setShowModal(false);
-            setForm({ title: '', description: '', project: '', assignedTo: '', deadline: '', priority: 'medium', status: 'not_started' });
-            fetchAll();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to create task');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const updateStatus = async (taskId: string, status: string) => {
-        setUpdatingTask(taskId + status);
-        try {
-            await api.patch(`/tasks/${taskId}/status`, { status });
-            setTasks(tasks.map(t => t.id === taskId ? { ...t, status } : t));
-            const label = { not_started: 'Not Started', in_progress: 'In Progress', completed: 'Done ✅' }[status] || status;
-            toast.success(`Moved to ${label}`);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to update status');
-        } finally {
-            setUpdatingTask(null);
-        }
-    };
-
-    const getInitials = (name: string) => name ? name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : '?';
-
-    if (loading) return <DashboardLayout><div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" style={{ width: 40, height: 40 }} /></div></DashboardLayout>;
-
-    return (
-        <DashboardLayout>
-            <div className="animate-fadeIn">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-                    <div>
-                        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Task Board</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{filteredTasks.length} tasks</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                        <CustomSelect 
-                            options={projects.map(p => ({ id: p.id, name: p.name }))} 
-                            value={selectedProject} 
-                            onChange={setSelectedProject} 
-                            width={200}
-                        />
-                        {(user?.role === 'guide' || user?.role === 'leader') && (
-                            <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> New Task</button>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-64" />)}
+        </div>
+      ) : view === 'kanban' ? (
+        /* Kanban Board */
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-x-auto pb-4 custom-scrollbar">
+          {COLUMNS.map((col) => {
+            const colTasks = getColumn(col.key);
+            return (
+              <div key={col.key} className="flex flex-col gap-4 min-w-[300px]">
+                {/* Column Header */}
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-3 h-3 rounded-full ${col.dotColor}`} />
+                    <h3 className={`label-text text-[14px] uppercase tracking-wider font-bold ${col.textColor}`}>{col.label}</h3>
+                    <span className={`${col.badgeCls} px-2 py-0.5 rounded-full text-xs font-bold`}>{colTasks.length}</span>
+                  </div>
+                </div>
+                {/* Task Cards */}
+                <div className="flex flex-col gap-4">
+                  {colTasks.map((task) => (
+                    <article key={task.id} className="bg-white p-4 rounded-xl shadow-sm border border-[--surface-container] hover:shadow-md transition-all group">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.medium}`}>
+                          {task.priority}
+                        </span>
+                        {col.key !== 'done' && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            {col.key === 'not_started' && (
+                              <button onClick={() => moveTask(task.id, 'in_progress')} title="Move to In Progress" className="text-[10px] label-text text-[--primary] hover:underline px-1">▶ Start</button>
+                            )}
+                            {col.key === 'in_progress' && (
+                              <button onClick={() => moveTask(task.id, 'done')} title="Mark Done" className="text-[10px] label-text text-emerald-600 hover:underline px-1">✓ Done</button>
+                            )}
+                          </div>
                         )}
-                    </div>
-                </div>
-
-                {/* Kanban Board */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-                    {COLUMNS.map(col => {
-                        const colTasks = filteredTasks.filter(t => t.status === col.key);
-                        return (
-                            <div key={col.key} className="kanban-column">
-                                <div className="kanban-header">
-                                    <div style={{ width: 10, height: 10, borderRadius: 2, background: col.color, flexShrink: 0 }} />
-                                    <span style={{ color: col.color }}>{col.label}</span>
-                                    <span style={{ marginLeft: 'auto', background: `${col.color}20`, color: col.color, padding: '2px 8px', borderRadius: 10, fontSize: 11 }}>{colTasks.length}</span>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                    {colTasks.map(task => (
-                                        <div key={task.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 16, cursor: 'default', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-                                            onMouseEnter={e => { e.currentTarget.style.borderColor = col.color; e.currentTarget.style.boxShadow = `0 4px 12px ${col.color}25`; }}
-                                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                                <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', flex: 1, lineHeight: 1.4 }}>{task.title}</span>
-                                                <span className={`badge priority-${task.priority}`} style={{ marginLeft: 8, flexShrink: 0 }}>{task.priority}</span>
-                                            </div>
-                                            {task.description && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>{task.description.slice(0, 80)}{task.description.length > 80 ? '...' : ''}</p>}
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
-                                                    {task.assignedTo && <><div className="avatar avatar-sm">{getInitials(task.assignedTo.name)}</div><span>{task.assignedTo.name?.split(' ')[0]}</span></>}
-                                                </div>
-                                                {task.deadline && <span style={{ fontSize: 11, color: new Date(task.deadline) < new Date() && task.status !== 'completed' ? 'var(--accent-red)' : 'var(--text-muted)' }}>📅 {format(new Date(task.deadline), 'MMM d')}</span>}
-                                            </div>
-                                            {/* Status actions */}
-                                            {canChangeStatus(task) && (
-                                                <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                                                    {col.key !== 'not_started' && (
-                                                        <button
-                                                            className="btn btn-secondary btn-sm"
-                                                            disabled={updatingTask === task.id + 'not_started'}
-                                                            onClick={() => updateStatus(task.id, 'not_started')}
-                                                            style={{ fontSize: 10, padding: '4px 8px' }}
-                                                        >
-                                                            {updatingTask === task.id + 'not_started' ? <div className="spinner" style={{ width: 10, height: 10 }} /> : '← Not Started'}
-                                                        </button>
-                                                    )}
-                                                    {col.key !== 'in_progress' && (
-                                                        <button
-                                                            className="btn btn-secondary btn-sm"
-                                                            disabled={updatingTask === task.id + 'in_progress'}
-                                                            onClick={() => updateStatus(task.id, 'in_progress')}
-                                                            style={{ fontSize: 10, padding: '4px 8px', color: '#22d3ee', borderColor: '#22d3ee40' }}
-                                                        >
-                                                            {updatingTask === task.id + 'in_progress' ? <div className="spinner" style={{ width: 10, height: 10 }} /> : '⏳ In Progress'}
-                                                        </button>
-                                                    )}
-                                                    {col.key !== 'completed' && (
-                                                        <button
-                                                            className="btn btn-secondary btn-sm"
-                                                            disabled={updatingTask === task.id + 'completed'}
-                                                            onClick={() => updateStatus(task.id, 'completed')}
-                                                            style={{ fontSize: 10, padding: '4px 8px', color: '#34d399', borderColor: '#34d39940' }}
-                                                        >
-                                                            {updatingTask === task.id + 'completed' ? <div className="spinner" style={{ width: 10, height: 10 }} /> : '✓ Mark Done'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                    {colTasks.length === 0 && (
-                                        <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontSize: 13, border: '2px dashed var(--border-color)', borderRadius: 10 }}>
-                                            No tasks here
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Create Task Modal */}
-            {showModal && (
-                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-                    <div className="modal">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Create New Task</h2>
-                            <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+                        {col.key === 'done' && (
+                          <span className="material-symbols-outlined text-emerald-500 text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                        )}
+                      </div>
+                      <h4 className={`font-semibold text-sm text-[--on-surface] mb-3 ${col.key === 'done' ? 'line-through opacity-60' : ''}`}>{task.title}</h4>
+                      {task.status === 'in_progress' && task.progress !== undefined && (
+                        <div className="mb-3">
+                          <div className="flex justify-between text-[10px] font-bold text-[--outline] mb-1">
+                            <span>Progress</span><span>{task.progress}%</span>
+                          </div>
+                          <div className="w-full bg-[--surface-container] rounded-full h-1.5">
+                            <div className="bg-[--primary] h-1.5 rounded-full" style={{ width: `${task.progress}%` }} />
+                          </div>
                         </div>
-                        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            <div className="form-group">
-                                <label className="label">Task Title *</label>
-                                <input className="input" type="text" placeholder="e.g. Design login page" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
-                            </div>
-                            <div className="form-group">
-                                <label className="label">Description</label>
-                                <textarea className="input" rows={3} placeholder="Task details..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ resize: 'vertical' }} />
-                            </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="label">Project *</label>
-                                    <CustomSelect 
-                                        options={projects.map(p => ({ id: p.id, name: p.name }))} 
-                                        value={form.project} 
-                                        onChange={val => {
-                                            setForm(prev => ({ ...prev, project: val, assignedTo: '' }));
-                                        }} 
-                                        label="Select project"
-                                        width="100%"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="label">Assign To</label>
-                                    <CustomSelect 
-                                        options={(() => {
-                                            const proj = projects.find(p => p.id === form.project);
-                                            if (!proj) return [];
-                                            const eligible = [...(proj.members || [])];
-                                            if (proj.leader && !eligible.find(m => m.id === proj.leader.id)) {
-                                                eligible.push(proj.leader);
-                                            }
-                                            return eligible.map(u => ({ id: u.id, name: `${u.name} (${u.role})` }));
-                                        })()} 
-                                        value={form.assignedTo} 
-                                        onChange={val => setForm(prev => ({ ...prev, assignedTo: val }))} 
-                                        label={form.project ? "Select member" : "Select project first"}
-                                        width="100%"
-                                    />
-                                </div>
-                            </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="label">Priority</label>
-                                    <select className="input" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                        <option value="critical">Critical</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="label">Deadline</label>
-                                    <input className="input" type="date" value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={saving}>{saving ? <div className="spinner" /> : 'Create Task'}</button>
-                            </div>
-                        </form>
-                    </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        {task.deadline ? (
+                          <div className="flex items-center gap-1 text-[--outline] text-xs">
+                            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                            {new Date(task.deadline).toLocaleDateString()}
+                          </div>
+                        ) : <span />}
+                        {task.assignedTo && (
+                          <div className="w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center text-[10px] font-bold text-blue-700 ring-2 ring-white overflow-hidden">
+                            {task.assignedTo.avatar ? (
+                              <img src={task.assignedTo.avatar} alt={task.assignedTo.name} className="w-full h-full object-cover" />
+                            ) : (
+                              task.assignedTo.name?.[0]?.toUpperCase()
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  ))}
                 </div>
-            )}
-        </DashboardLayout>
-    );
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* List View */
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {tasks.length === 0 ? (
+            <div className="p-12 text-center">
+              <span className="material-symbols-outlined text-5xl text-slate-200 mb-3 block">task</span>
+              <p className="text-[--on-surface-variant]">No tasks yet. Create your first one!</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-[--surface-container-low] border-b border-[--outline-variant]/20">
+                <tr>
+                  {['Title', 'Priority', 'Status', 'Deadline'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left label-text text-xs uppercase tracking-widest text-[--on-surface-variant] font-semibold">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[--outline-variant]/10">
+                {tasks.map((t) => (
+                  <tr key={t.id} className="hover:bg-[--surface-container-low] transition-colors">
+                    <td className="px-4 py-4 font-medium">{t.title}</td>
+                    <td className="px-4 py-4">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${PRIORITY_BADGE[t.priority] ?? PRIORITY_BADGE.medium}`}>{t.priority}</span>
+                    </td>
+                    <td className="px-4 py-4 capitalize">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${t.status === 'done' ? 'bg-emerald-100 text-emerald-700' : t.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {t.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-[--on-surface-variant]">
+                      {t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* FAB */}
+      {(user?.role === 'leader' || user?.role === 'guide') && (
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="fixed bottom-24 right-6 md:bottom-8 md:right-8 w-14 h-14 bg-[--primary] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-40 group"
+        >
+          <span className="material-symbols-outlined text-[28px]">add</span>
+          <span className="absolute right-full mr-4 bg-[--primary] px-3 py-1.5 rounded-lg text-white label-text text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Create Task</span>
+        </button>
+      )}
+
+      {/* Create Task Modal */}
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="Create New Task">
+        <form onSubmit={handleCreate} className="space-y-5">
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Task Title *</label>
+            <input
+              className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm"
+              placeholder="Research Methodology Framework"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Description</label>
+            <textarea
+              className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none resize-none text-sm"
+              rows={3}
+              placeholder="Describe the task..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Priority</label>
+              <select
+                className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm bg-white"
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: e.target.value })}
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Deadline</label>
+              <input
+                type="date"
+                className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm"
+                value={form.deadline}
+                onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full py-4 bg-[--primary] text-white rounded-xl font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            {submitting ? 'Creating…' : 'Create Task'}
+          </button>
+        </form>
+      </Modal>
+    </AppLayout>
+  );
 }

@@ -3,23 +3,19 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
-export default function Home() {
-  const { user, loading } = useAuth();
+export default function HomePage() {
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
-      if (user) {
-        router.push('/dashboard');
-      } else {
-        router.push('/login');
-      }
+      router.replace(isAuthenticated ? '/dashboard' : '/login');
     }
-  }, [user, loading, router]);
+  }, [isAuthenticated, loading, router]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <div className="spinner" style={{ width: 40, height: 40 }} />
+    <div className="min-h-screen flex items-center justify-center bg-[--background]">
+      <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
     </div>
   );
 }

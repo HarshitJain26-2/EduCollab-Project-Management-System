@@ -1,254 +1,240 @@
 'use client';
 import { useEffect, useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import AppLayout from '@/components/ui/AppLayout';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/axios';
+import Modal from '@/components/ui/Modal';
+import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Plus, X, MessageSquare, CheckCircle, AlertCircle, Clock, FileText } from 'lucide-react';
-import { format } from 'date-fns';
 
-import { useSocket } from '@/context/SocketContext';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface Update {
+  id: string;
+  workCompleted: string;
+  issuesFaced: string;
+  nextSteps: string;
+  status: string;
+  date: string;
+  member?: { id: string; name: string; avatar?: string };
+  comments?: { id: string; text: string; author?: { name: string }; createdAt: string }[];
+}
 
 export default function UpdatesPage() {
-    const { user } = useAuth();
-    const { socket } = useSocket();
-    const [updates, setUpdates] = useState<any[]>([]);
-    const [projects, setProjects] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState({ project: '', date: format(new Date(), 'yyyy-MM-dd'), workCompleted: '', issuesFaced: '', nextSteps: '' });
-    const [saving, setSaving] = useState(false);
-    const [commentText, setCommentText] = useState<{ [key: string]: string }>({});
-    const [selectedProject, setSelectedProject] = useState('');
+  const { token, user } = useAuth();
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [form, setForm] = useState({ workCompleted: '', issuesFaced: '', nextSteps: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [comment, setComment] = useState<Record<string, string>>({});
 
-    const fetchAll = () => {
-        setLoading(true);
-        Promise.all([api.get('/updates'), api.get('/projects')])
-            .then(([uRes, pRes]) => {
-                const fetchedUpdates = uRes.data.updates || [];
-                const fetchedProjects = pRes.data.projects || [];
-                setUpdates(fetchedUpdates);
-                setProjects(fetchedProjects);
+  const fetchUpdates = async () => {
+    try {
+      const res = await axios.get(`${API}/updates`, { headers: { Authorization: `Bearer ${token}` } });
+      setUpdates(res.data?.updates || res.data || []);
+    } catch {
+      setUpdates([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                // Auto-select if only one project
-                if (fetchedProjects.length === 1) {
-                    setSelectedProject(fetchedProjects[0].id);
-                    setForm(prev => ({ ...prev, project: fetchedProjects[0].id }));
-                }
-            })
-            .catch(() => toast.error('Failed to load updates'))
-            .finally(() => setLoading(false));
+  useEffect(() => { if (token) fetchUpdates(); }, [token]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.workCompleted.trim()) return toast.error('Work completed field is required');
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`${API}/updates`, { ...form, date: new Date().toISOString() }, { headers: { Authorization: `Bearer ${token}` } });
+      setUpdates((prev) => [res.data?.update || res.data, ...prev]);
+      toast.success('Daily update submitted!');
+      setSubmitOpen(false);
+      setForm({ workCompleted: '', issuesFaced: '', nextSteps: '' });
+    } catch {
+      toast.error('Failed to submit update');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleComment = async (updateId: string) => {
+    const text = comment[updateId]?.trim();
+    if (!text) return;
+    try {
+      await axios.post(`${API}/updates/${updateId}/comments`, { text }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Comment posted');
+      setComment((prev) => ({ ...prev, [updateId]: '' }));
+      fetchUpdates();
+    } catch {
+      toast.error('Failed to post comment');
+    }
+  };
+
+  const statusBadge = (s: string) => {
+    const map: Record<string, string> = {
+      approved: 'bg-emerald-100 text-emerald-700',
+      pending: 'bg-yellow-100 text-yellow-700',
+      rejected: 'bg-red-100 text-red-700',
     };
+    return map[s] ?? 'bg-slate-100 text-slate-600';
+  };
 
-    useEffect(() => {
-        fetchAll();
-    }, []);
+  return (
+    <AppLayout>
+      {/* Header */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-[--on-background] mb-1">Daily Updates</h1>
+          <p className="text-[--on-surface-variant]">Team standup feed — track progress, blockers, and next steps.</p>
+        </div>
+        {user?.role === 'member' && (
+          <button
+            onClick={() => setSubmitOpen(true)}
+            className="bg-[--primary] text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Submit Update
+          </button>
+        )}
+      </div>
 
-    useEffect(() => {
-        if (!socket) return;
-
-        const handleUpdateSync = () => fetchAll();
-        
-        socket.on('update_added', handleUpdateSync);
-        socket.on('update_status_changed', handleUpdateSync);
-        socket.on('comment_added', handleUpdateSync);
-
-        return () => {
-            socket.off('update_added', handleUpdateSync);
-            socket.off('update_status_changed', handleUpdateSync);
-            socket.off('comment_added', handleUpdateSync);
-        };
-    }, [socket]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-            const formData = new FormData();
-            Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-            await api.post('/updates', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            toast.success('Daily update submitted!');
-            setShowModal(false);
-            setForm({ project: '', date: format(new Date(), 'yyyy-MM-dd'), workCompleted: '', issuesFaced: '', nextSteps: '' });
-            fetchAll();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to submit update');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleComment = async (updateId: string) => {
-        const text = commentText[updateId];
-        if (!text?.trim()) return;
-        try {
-            await api.post(`/updates/${updateId}/comment`, { text });
-            toast.success('Comment added!');
-            setCommentText(prev => ({ ...prev, [updateId]: '' }));
-            fetchAll();
-        } catch { toast.error('Failed to add comment'); }
-    };
-
-    const handleStatusChange = async (updateId: string, status: string) => {
-        try {
-            await api.patch(`/updates/${updateId}/status`, { status });
-            toast.success(status === 'approved' ? 'Update approved!' : 'Revision requested');
-            fetchAll();
-        } catch { toast.error('Failed to update status'); }
-    };
-
-    const filteredUpdates = selectedProject ? updates.filter(u => u.project === selectedProject || u.project?.id === selectedProject) : updates;
-
-    const getInitials = (name: string) => name ? name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : '?';
-
-    if (loading) return <DashboardLayout><div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" style={{ width: 40, height: 40 }} /></div></DashboardLayout>;
-
-    return (
-        <DashboardLayout>
-            <div className="animate-fadeIn">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-                    <div>
-                        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Daily Updates</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Progress logs from the team</p>
+      {loading ? (
+        <div className="space-y-6">{[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-32" />)}</div>
+      ) : updates.length === 0 ? (
+        <div className="bg-white rounded-xl p-16 text-center shadow-sm">
+          <span className="material-symbols-outlined text-5xl text-slate-200 mb-4 block">history_edu</span>
+          <h3 className="text-xl font-bold mb-2">No updates yet</h3>
+          <p className="text-[--on-surface-variant]">Be the first to submit a daily update for your team.</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {updates.map((u) => {
+            const isExpanded = expandedId === u.id;
+            const initials = u.member?.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U';
+            return (
+              <div key={u.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-[--outline-variant]/10">
+                <div className="p-6">
+                  {/* Card Header */}
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-11 h-11 rounded-full bg-[--primary-fixed] flex items-center justify-center text-sm font-bold text-[--primary] overflow-hidden flex-shrink-0">
+                      {u.member?.avatar ? <img src={u.member.avatar} alt={u.member.name} className="w-full h-full object-cover" /> : initials}
                     </div>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                        <select className="input" style={{ width: 180 }} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-                            <option value="">All Projects</option>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
-                        {user?.role === 'member' && <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Submit Update</button>}
+                    <div className="flex-grow">
+                      <p className="font-semibold">{u.member?.name ?? 'Team Member'}</p>
+                      <p className="text-xs text-[--on-surface-variant]">{new Date(u.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>
-                </div>
+                    <span className={`label-text text-[10px] uppercase font-bold px-3 py-1 rounded-full ${statusBadge(u.status)}`}>{u.status}</span>
+                  </div>
 
-                {filteredUpdates.length === 0 ? (
-                    <div className="empty-state card" style={{ padding: 60 }}>
-                        <FileText size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 20px' }} />
-                        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-secondary)' }}>No updates yet</p>
-                        {user?.role === 'member' && <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}><Plus size={16} /> Submit First Update</button>}
+                  {/* Work Completed */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-[16px] text-emerald-600">task_alt</span>
+                      <h4 className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] font-bold">Work Completed</h4>
                     </div>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                        {filteredUpdates.map((update: any) => (
-                            <div key={update.id} className="card" style={{ padding: 24 }}>
-                                {/* Header */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                        <div className="avatar">{getInitials(update.member?.name || '')}</div>
-                                        <div>
-                                            <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 15 }}>{update.member?.name}</div>
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>📅 {format(new Date(update.date), 'EEEE, MMMM d, yyyy')}</div>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                        <span className={`badge ${update.status === 'approved' ? 'badge-green' : update.status === 'revision_requested' ? 'badge-red' : 'badge-yellow'}`}>
-                                            {update.status === 'approved' ? <CheckCircle size={12} style={{ marginRight: 4 }} /> : update.status === 'revision_requested' ? <AlertCircle size={12} style={{ marginRight: 4 }} /> : <Clock size={12} style={{ marginRight: 4 }} />}
-                                            {update.status.replace('_', ' ')}
-                                        </span>
-                                        {(user?.role === 'guide' || user?.role === 'leader') && update.status === 'pending' && (
-                                            <div style={{ display: 'flex', gap: 6 }}>
-                                                <button className="btn btn-sm" onClick={() => handleStatusChange(update.id, 'approved')} style={{ background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', gap: 4 }}>
-                                                    <CheckCircle size={12} /> Approve
-                                                </button>
-                                                <button className="btn btn-sm" onClick={() => handleStatusChange(update.id, 'revision_requested')} style={{ background: 'rgba(248,113,113,0.15)', color: '#f87171', border: '1px solid rgba(248,113,113,0.3)', gap: 4 }}>
-                                                    <AlertCircle size={12} /> Revision
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                    <p className="text-sm leading-relaxed">{u.workCompleted}</p>
+                  </div>
 
-                                {/* Content */}
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
-                                    {[
-                                        { label: '✅ Work Completed', text: update.workCompleted, color: '#34d399' },
-                                        { label: '⚠️ Issues Faced', text: update.issuesFaced, color: '#fbbf24' },
-                                        { label: '🎯 Next Steps', text: update.nextSteps, color: '#22d3ee' },
-                                    ].map(section => section.text ? (
-                                        <div key={section.label} style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: 14, borderLeft: `3px solid ${section.color}` }}>
-                                            <div style={{ fontSize: 11, fontWeight: 700, color: section.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{section.label}</div>
-                                            <p style={{ fontSize: 14, color: 'var(--text-primary)', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{section.text}</p>
-                                        </div>
-                                    ) : null)}
-                                </div>
-
-                                {/* Comments */}
-                                {update.comments?.length > 0 && (
-                                    <div style={{ marginBottom: 16, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
-                                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Comments ({update.comments.length})</div>
-                                        {update.comments.map((c: any, i: number) => (
-                                            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                                                <div className="avatar avatar-sm" style={{ background: c.author?.role === 'guide' ? '#f472b6' : 'var(--accent-primary)' }}>{getInitials(c.author?.name || '')}</div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: 12, marginBottom: 4 }}>
-                                                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.author?.name}</span>
-                                                        <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>{format(new Date(c.createdAt), 'MMM d, h:mm a')}</span>
-                                                    </div>
-                                                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 8 }}>{c.text}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Add Comment */}
-                                {(user?.role === 'guide' || user?.role === 'leader') && (
-                                    <div style={{ display: 'flex', gap: 10 }}>
-                                        <input
-                                            className="input" placeholder="Add a comment..." style={{ flex: 1 }}
-                                            value={commentText[update.id] || ''} onChange={e => setCommentText(prev => ({ ...prev, [update.id]: e.target.value }))}
-                                            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleComment(update.id)}
-                                        />
-                                        <button className="btn btn-primary btn-sm" onClick={() => handleComment(update.id)}><MessageSquare size={14} /></button>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Submit Update Modal */}
-            {showModal && (
-                <div className="modal-overlay" onClick={(e: any) => e.target === e.currentTarget && setShowModal(false)}>
-                    <div className="modal">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Submit Daily Update</h2>
-                            <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+                  {isExpanded && (
+                    <>
+                      {u.issuesFaced && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="material-symbols-outlined text-[16px] text-[--error]">report_problem</span>
+                            <h4 className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] font-bold">Issues / Blockers</h4>
+                          </div>
+                          <p className="text-sm leading-relaxed">{u.issuesFaced}</p>
                         </div>
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="label">Project *</label>
-                                    <select className="input" value={form.project} onChange={e => setForm({ ...form, project: e.target.value })} required>
-                                        <option value="">Select project</option>
-                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="label">Date</label>
-                                    <input className="input" type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
-                                </div>
+                      )}
+                      {u.nextSteps && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="material-symbols-outlined text-[16px] text-[--primary]">arrow_forward</span>
+                            <h4 className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] font-bold">Next Steps</h4>
+                          </div>
+                          <p className="text-sm leading-relaxed">{u.nextSteps}</p>
+                        </div>
+                      )}
+
+                      {/* Comments */}
+                      {(u.comments?.length ?? 0) > 0 && (
+                        <div className="mt-5 pt-5 border-t border-[--outline-variant]/20 space-y-3">
+                          <h4 className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] font-bold">Comments</h4>
+                          {u.comments?.map((c) => (
+                            <div key={c.id} className="bg-[--surface-container-low] rounded-lg p-3">
+                              <p className="text-xs font-semibold text-[--on-surface] mb-1">{c.author?.name ?? 'Guide'}</p>
+                              <p className="text-sm">{c.text}</p>
                             </div>
-                            <div className="form-group">
-                                <label className="label">Work Completed *</label>
-                                <textarea className="input" rows={3} placeholder="Describe what you accomplished today..." value={form.workCompleted} onChange={e => setForm({ ...form, workCompleted: e.target.value })} required style={{ resize: 'vertical' }} />
-                            </div>
-                            <div className="form-group">
-                                <label className="label">Issues Faced</label>
-                                <textarea className="input" rows={2} placeholder="Any blockers or challenges?" value={form.issuesFaced} onChange={e => setForm({ ...form, issuesFaced: e.target.value })} style={{ resize: 'vertical' }} />
-                            </div>
-                            <div className="form-group">
-                                <label className="label">Next Steps</label>
-                                <textarea className="input" rows={2} placeholder="What will you work on tomorrow?" value={form.nextSteps} onChange={e => setForm({ ...form, nextSteps: e.target.value })} style={{ resize: 'vertical' }} />
-                            </div>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={saving}>{saving ? <div className="spinner" /> : 'Submit Update'}</button>
-                            </div>
-                        </form>
-                    </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Comment */}
+                      <div className="mt-4 flex gap-2">
+                        <input
+                          className="flex-grow p-3 border border-[--outline-variant] rounded-xl text-sm focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none"
+                          placeholder="Add a comment..."
+                          value={comment[u.id] ?? ''}
+                          onChange={(e) => setComment((prev) => ({ ...prev, [u.id]: e.target.value }))}
+                          onKeyDown={(e) => e.key === 'Enter' && handleComment(u.id)}
+                        />
+                        <button
+                          onClick={() => handleComment(u.id)}
+                          className="px-4 py-3 bg-[--primary] text-white rounded-xl hover:opacity-90 transition-opacity"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">send</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : u.id)}
+                    className="mt-4 text-[--primary] label-text text-xs font-semibold uppercase tracking-widest hover:underline flex items-center gap-1"
+                  >
+                    {isExpanded ? 'Show Less' : 'Show Details & Comments'}
+                    <span className="material-symbols-outlined text-[14px]">{isExpanded ? 'expand_less' : 'expand_more'}</span>
+                  </button>
                 </div>
-            )}
-        </DashboardLayout>
-    );
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* FAB */}
+      {user?.role === 'member' && (
+        <button
+          onClick={() => setSubmitOpen(true)}
+          className="fixed bottom-24 right-6 md:bottom-8 md:right-8 w-14 h-14 bg-[--primary] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-40 group"
+        >
+          <span className="material-symbols-outlined text-[28px]">add</span>
+          <span className="absolute right-full mr-4 bg-[--primary] px-3 py-1.5 rounded-lg text-white label-text text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Submit Update</span>
+        </button>
+      )}
+
+      {/* Submit Modal */}
+      <Modal isOpen={submitOpen} onClose={() => setSubmitOpen(false)} title="Submit Daily Update">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">What did you complete today? *</label>
+            <textarea className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none resize-none text-sm" rows={3} placeholder="Completed the data analysis module..." value={form.workCompleted} onChange={(e) => setForm({ ...form, workCompleted: e.target.value })} />
+          </div>
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Issues / Blockers</label>
+            <textarea className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none resize-none text-sm" rows={2} placeholder="Had trouble with API integration..." value={form.issuesFaced} onChange={(e) => setForm({ ...form, issuesFaced: e.target.value })} />
+          </div>
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Next Steps</label>
+            <textarea className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none resize-none text-sm" rows={2} placeholder="Will implement authentication tomorrow..." value={form.nextSteps} onChange={(e) => setForm({ ...form, nextSteps: e.target.value })} />
+          </div>
+          <button type="submit" disabled={submitting} className="w-full py-4 bg-[--primary] text-white rounded-xl font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50">
+            {submitting ? 'Submitting...' : 'Submit Update'}
+          </button>
+        </form>
+      </Modal>
+    </AppLayout>
+  );
 }

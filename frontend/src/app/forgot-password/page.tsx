@@ -1,69 +1,42 @@
 'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import api from '@/lib/axios';
-import toast from 'react-hot-toast';
-import { Mail, BookOpen, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [sent, setSent] = useState(false);
+  return (
+    <div className="bg-[--background] min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+       {/* Background blobs */}
+       <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[--primary-fixed-dim]/30 blur-[120px] rounded-full" />
+        <div className="absolute top-[40%] -right-[10%] w-[35%] h-[35%] bg-[--secondary-fixed-dim]/20 blur-[100px] rounded-full" />
+      </div>
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            await api.post('/auth/forgot-password', { email });
-            setSent(true);
-            toast.success('Reset instructions sent!');
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to send reset email');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', padding: 24 }}>
-            <div style={{ width: '100%', maxWidth: 420 }}>
-                <div style={{ textAlign: 'center', marginBottom: 40 }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #6c63ff, #a78bfa)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                        <BookOpen size={28} color="white" />
-                    </div>
-                    <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Forgot your password?</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Enter your email and we&apos;ll send you a reset link.</p>
-                </div>
-
-                <div className="card" style={{ padding: 36 }}>
-                    {sent ? (
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 56, marginBottom: 20 }}>📧</div>
-                            <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Check your email</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7 }}>
-                                If an account exists for <strong>{email}</strong>, you&apos;ll receive password reset instructions.
-                            </p>
-                            <Link href="/login" className="btn btn-primary" style={{ marginTop: 24, display: 'inline-flex' }}><ArrowLeft size={16} /> Back to Login</Link>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                            <div className="form-group">
-                                <label className="label">Email Address</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                                    <input className="input" style={{ paddingLeft: 40 }} type="email" placeholder="you@college.edu" value={email} onChange={e => setEmail(e.target.value)} required />
-                                </div>
-                            </div>
-                            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                                {loading ? <div className="spinner" /> : 'Send Reset Link'}
-                            </button>
-                            <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
-                                <Link href="/login" style={{ color: 'var(--accent-secondary)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><ArrowLeft size={14} /> Back to login</Link>
-                            </div>
-                        </form>
-                    )}
-                </div>
+      <main className="relative z-10 w-full max-w-md">
+        <div className="glass-panel rounded-3xl p-8 md:p-12 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-6">
+            <span className="material-symbols-outlined text-3xl">lock_reset</span>
+          </div>
+          <h1 className="text-3xl font-bold mb-4">Reset Password</h1>
+          <p className="text-[--on-surface-variant] mb-8">Enter your email address and we'll send you instructions to reset your password.</p>
+          
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+            <div className="space-y-2 text-left">
+              <label className="label-text text-xs text-[--on-surface-variant] uppercase tracking-widest px-1">Email Address</label>
+              <input 
+                type="email" 
+                placeholder="student@university.edu" 
+                className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm"
+              />
             </div>
+            <button className="w-full py-4 bg-[--primary] text-white rounded-xl font-bold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all">
+              Send Reset Link
+            </button>
+          </form>
+
+          <p className="mt-8 text-sm text-[--on-surface-variant]">
+            Remember your password? <Link href="/login" className="text-[--primary] font-semibold hover:underline">Back to Login</Link>
+          </p>
         </div>
-    );
+      </main>
+    </div>
+  );
 }

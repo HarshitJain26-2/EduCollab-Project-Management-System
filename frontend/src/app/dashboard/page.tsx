@@ -1,25 +1,24 @@
 'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import AppLayout from '@/components/ui/AppLayout';
 import { useAuth } from '@/context/AuthContext';
+import GuideDashboard from '@/components/dashboards/GuideDashboard';
+import LeaderDashboard from '@/components/dashboards/LeaderDashboard';
+import MemberDashboard from '@/components/dashboards/MemberDashboard';
 
 export default function DashboardPage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+  const { user } = useAuth();
 
-    useEffect(() => {
-        if (!loading && user) {
-            if (user.role === 'guide') router.replace('/dashboard/guide');
-            else if (user.role === 'leader') router.replace('/dashboard/leader');
-            else router.replace('/dashboard/member');
-        } else if (!loading && !user) {
-            router.replace('/login');
-        }
-    }, [user, loading, router]);
+  const renderDashboard = () => {
+    switch (user?.role) {
+      case 'guide':
+        return <GuideDashboard />;
+      case 'leader':
+        return <LeaderDashboard />;
+      case 'member':
+      default:
+        return <MemberDashboard />;
+    }
+  };
 
-    return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-            <div className="spinner" style={{ width: 40, height: 40 }} />
-        </div>
-    );
+  return <AppLayout>{renderDashboard()}</AppLayout>;
 }

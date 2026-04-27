@@ -1,198 +1,192 @@
 'use client';
 import { useEffect, useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import AppLayout from '@/components/ui/AppLayout';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/axios';
+import Modal from '@/components/ui/Modal';
+import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Plus, X, Calendar, Clock, Video, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
 
-import { useSocket } from '@/context/SocketContext';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  agenda: string;
+  meetingLink: string;
+  participants?: { id: string; name: string; avatar?: string }[];
+  createdBy?: { name: string };
+}
 
 export default function MeetingsPage() {
-    const { user } = useAuth();
-    const { socket } = useSocket();
-    const [meetings, setMeetings] = useState<any[]>([]);
-    const [projects, setProjects] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState({ project: '', title: '', date: '', time: '', agenda: '', meetingLink: '' });
-    const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+  const { token, user } = useAuth();
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [form, setForm] = useState({ title: '', date: '', time: '', agenda: '', meetingLink: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-    const fetchAll = () => {
-        setLoading(true);
-        Promise.all([api.get('/meetings'), api.get('/projects')])
-            .then(([mRes, pRes]) => { 
-                const fetchedMeetings = mRes.data.meetings || [];
-                const fetchedProjects = pRes.data.projects || [];
-                setMeetings(fetchedMeetings); 
-                setProjects(fetchedProjects); 
+  const fetchMeetings = async () => {
+    try {
+      const res = await axios.get(`${API}/meetings`, { headers: { Authorization: `Bearer ${token}` } });
+      setMeetings(res.data?.meetings || res.data || []);
+    } catch { setMeetings([]); }
+    finally { setLoading(false); }
+  };
 
-                // Auto-select in form if only one project
-                if (fetchedProjects.length === 1) {
-                    setForm(prev => ({ ...prev, project: fetchedProjects[0].id }));
-                }
-            })
-            .catch(() => toast.error('Failed to load meetings'))
-            .finally(() => setLoading(false));
-    };
+  useEffect(() => { if (token) fetchMeetings(); }, [token]);
 
-    useEffect(() => { fetchAll(); }, []);
+  const handleSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title || !form.date || !form.time) return toast.error('Title, date, and time are required');
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`${API}/meetings`, form, { headers: { Authorization: `Bearer ${token}` } });
+      setMeetings((prev) => [res.data?.meeting || res.data, ...prev]);
+      toast.success('Meeting scheduled!');
+      setScheduleOpen(false);
+      setForm({ title: '', date: '', time: '', agenda: '', meetingLink: '' });
+    } catch { toast.error('Failed to schedule meeting'); }
+    finally { setSubmitting(false); }
+  };
 
-    useEffect(() => {
-        if (!socket) return;
-        const handleMeetingAdded = () => fetchAll();
-        socket.on('meeting_added', handleMeetingAdded);
-        return () => { socket.off('meeting_added', handleMeetingAdded); };
-    }, [socket]);
+  const upcoming = meetings.filter((m) => new Date(`${m.date} ${m.time}`) >= new Date());
+  const past = meetings.filter((m) => new Date(`${m.date} ${m.time}`) < new Date());
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true);
-        try {
-            await api.post('/meetings', form);
-            toast.success('Meeting scheduled!');
-            setShowModal(false);
-            setForm({ project: '', title: '', date: '', time: '', agenda: '', meetingLink: '' });
-            fetchAll();
-        } catch (err: any) { toast.error(err.response?.data?.message || 'Failed to schedule meeting'); }
-        finally { setSaving(false); }
-    };
+  return (
+    <AppLayout>
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-[--on-background] mb-1">Meetings</h1>
+          <p className="text-[--on-surface-variant]">Schedule and join team meetings.</p>
+        </div>
+        {(user?.role === 'leader' || user?.role === 'guide') && (
+          <button
+            onClick={() => setScheduleOpen(true)}
+            className="bg-[--primary] text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Schedule Meeting
+          </button>
+        )}
+      </div>
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Delete this meeting?')) return;
-        try { await api.delete(`/meetings/${id}`); toast.success('Meeting deleted'); fetchAll(); }
-        catch { toast.error('Failed to delete meeting'); }
-    };
-
-    const now = new Date();
-    const upcoming = meetings.filter(m => new Date(m.date) >= now).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const past = meetings.filter(m => new Date(m.date) < now).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const displayed = activeTab === 'upcoming' ? upcoming : past;
-
-    if (loading) return <DashboardLayout><div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" style={{ width: 40, height: 40 }} /></div></DashboardLayout>;
-
-    return (
-        <DashboardLayout>
-            <div className="animate-fadeIn">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-                    <div>
-                        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Meetings</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{upcoming.length} upcoming, {past.length} past</p>
+      {loading ? (
+        <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-28" />)}</div>
+      ) : (
+        <>
+          {upcoming.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[--primary]">event</span>
+                Upcoming
+              </h2>
+              <div className="space-y-4">
+                {upcoming.map((m) => (
+                  <div key={m.id} className="bg-white rounded-xl p-6 shadow-sm border border-[--primary]/10 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl bg-[--primary-fixed] flex flex-col items-center justify-center text-[--primary] flex-shrink-0">
+                      <span className="text-xl font-bold">{new Date(m.date).getDate()}</span>
+                      <span className="label-text text-[10px] uppercase font-bold">{new Date(m.date).toLocaleString('default', { month: 'short' })}</span>
                     </div>
-                    {(user?.role === 'guide' || user?.role === 'leader') && (
-                        <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Schedule Meeting</button>
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-bold mb-1">{m.title}</h3>
+                      <div className="flex flex-wrap gap-4 text-sm text-[--on-surface-variant]">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">schedule</span>
+                          {m.time}
+                        </span>
+                        {m.createdBy && (
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[14px]">person</span>
+                            {m.createdBy.name}
+                          </span>
+                        )}
+                      </div>
+                      {m.agenda && <p className="text-sm text-[--on-surface-variant] mt-2 line-clamp-2">{m.agenda}</p>}
+                    </div>
+                    {m.meetingLink ? (
+                      <a
+                        href={m.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[--primary] text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all whitespace-nowrap"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">videocam</span>
+                        Join Meeting
+                      </a>
+                    ) : (
+                      <span className="label-text text-xs text-[--on-surface-variant] px-4 py-3 rounded-xl bg-[--surface-container]">No link yet</span>
                     )}
-                </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-                <div className="tabs">
-                    <div className={`tab ${activeTab === 'upcoming' ? 'active' : ''}`} onClick={() => setActiveTab('upcoming')}>Upcoming ({upcoming.length})</div>
-                    <div className={`tab ${activeTab === 'past' ? 'active' : ''}`} onClick={() => setActiveTab('past')}>Past ({past.length})</div>
-                </div>
-
-                {displayed.length === 0 ? (
-                    <div className="empty-state card" style={{ padding: 60 }}>
-                        <Calendar size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 20px' }} />
-                        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-secondary)' }}>No {activeTab} meetings</p>
+          {past.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[--on-surface-variant]">
+                <span className="material-symbols-outlined">history</span>
+                Past Meetings
+              </h2>
+              <div className="space-y-3">
+                {past.slice(0, 5).map((m) => (
+                  <div key={m.id} className="bg-[--surface-container-low] rounded-xl p-4 flex items-center gap-4 opacity-70">
+                    <div className="w-10 h-10 rounded-lg bg-[--surface-container] flex flex-col items-center justify-center text-[--on-surface-variant] flex-shrink-0">
+                      <span className="text-sm font-bold">{new Date(m.date).getDate()}</span>
+                      <span className="label-text text-[8px] uppercase">{new Date(m.date).toLocaleString('default', { month: 'short' })}</span>
                     </div>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
-                        {displayed.map((m: any) => {
-                            const isPast = new Date(m.date) < now;
-                            return (
-                                <div key={m.id} className="card" style={{ padding: 24, opacity: isPast ? 0.75 : 1 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                                        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                                            <div style={{ width: 52, height: 52, borderRadius: 12, background: isPast ? 'var(--bg-secondary)' : 'rgba(108,99,255,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                <div style={{ fontSize: 18, fontWeight: 800, color: isPast ? 'var(--text-muted)' : 'var(--accent-secondary)', lineHeight: 1 }}>{format(new Date(m.date), 'd')}</div>
-                                                <div style={{ fontSize: 10, color: isPast ? 'var(--text-muted)' : 'var(--accent-secondary)', textTransform: 'uppercase' }}>{format(new Date(m.date), 'MMM')}</div>
-                                            </div>
-                                            <div>
-                                                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>{m.title}</h3>
-                                                <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', gap: 10 }}>
-                                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> {m.time}</span>
-                                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} /> {format(new Date(m.date), 'EEE, MMM d')}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {(user?.role === 'guide' || user?.role === 'leader') && (
-                                            <button onClick={() => handleDelete(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}><Trash2 size={14} /></button>
-                                        )}
-                                    </div>
-
-                                    {m.agenda && <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.6, background: 'var(--bg-secondary)', borderRadius: 8, padding: '10px 12px' }}>{m.agenda}</p>}
-
-                                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                                        {m.meetingLink && !isPast && (
-                                            <a href={m.meetingLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
-                                                <Video size={14} /> Join Meeting
-                                            </a>
-                                        )}
-                                        {m.createdBy && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>by {m.createdBy.name}</span>}
-                                        {m.participants?.length > 0 && (
-                                            <div style={{ display: 'flex', gap: -4, marginLeft: 'auto' }}>
-                                                {m.participants.slice(0, 4).map((p: any, i: number) => (
-                                                    <div key={i} className="avatar avatar-sm" style={{ border: '2px solid var(--bg-card)', marginLeft: i > 0 ? -8 : 0, zIndex: i, background: 'var(--accent-primary)' }}>
-                                                        {p.name?.[0] || '?'}
-                                                    </div>
-                                                ))}
-                                                {m.participants.length > 4 && <div className="avatar avatar-sm" style={{ border: '2px solid var(--bg-card)', marginLeft: -8, background: 'var(--bg-secondary)', color: 'var(--text-muted)', fontSize: 9 }}>+{m.participants.length - 4}</div>}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div>
+                      <p className="font-semibold text-sm">{m.title}</p>
+                      <p className="text-xs text-[--on-surface-variant]">{m.time}</p>
                     </div>
-                )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {meetings.length === 0 && (
+            <div className="bg-white rounded-xl p-16 text-center shadow-sm">
+              <span className="material-symbols-outlined text-5xl text-slate-200 mb-4 block">event</span>
+              <h3 className="text-xl font-bold mb-2">No meetings scheduled</h3>
+              <p className="text-[--on-surface-variant]">Schedule your first team meeting to get started.</p>
             </div>
+          )}
+        </>
+      )}
 
-            {/* Schedule Meeting Modal */}
-            {showModal && (
-                <div className="modal-overlay" onClick={(e: any) => e.target === e.currentTarget && setShowModal(false)}>
-                    <div className="modal">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Schedule Meeting</h2>
-                            <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            <div className="form-group">
-                                <label className="label">Project *</label>
-                                <select className="input" value={form.project} onChange={e => setForm({ ...form, project: e.target.value })} required>
-                                    <option value="">Select project</option>
-                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="label">Meeting Title *</label>
-                                <input className="input" type="text" placeholder="e.g. Weekly Standup" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
-                            </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="label">Date *</label>
-                                    <input className="input" type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required min={format(new Date(), 'yyyy-MM-dd')} />
-                                </div>
-                                <div className="form-group">
-                                    <label className="label">Time *</label>
-                                    <input className="input" type="time" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} required />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="label">Agenda</label>
-                                <textarea className="input" rows={3} placeholder="Meeting agenda and topics to discuss..." value={form.agenda} onChange={e => setForm({ ...form, agenda: e.target.value })} style={{ resize: 'vertical' }} />
-                            </div>
-                            <div className="form-group">
-                                <label className="label">Meeting Link (Google Meet / Zoom)</label>
-                                <input className="input" type="url" placeholder="https://meet.google.com/..." value={form.meetingLink} onChange={e => setForm({ ...form, meetingLink: e.target.value })} />
-                            </div>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={saving}>{saving ? <div className="spinner" /> : 'Schedule'}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </DashboardLayout>
-    );
+      {/* Schedule Modal */}
+      <Modal isOpen={scheduleOpen} onClose={() => setScheduleOpen(false)} title="Schedule Meeting">
+        <form onSubmit={handleSchedule} className="space-y-5">
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Meeting Title *</label>
+            <input className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm" placeholder="Weekly Team Standup" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Date *</label>
+              <input type="date" className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            </div>
+            <div>
+              <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Time *</label>
+              <input type="time" className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+            </div>
+          </div>
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Agenda</label>
+            <textarea className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none resize-none text-sm" rows={3} placeholder="Topics to discuss..." value={form.agenda} onChange={(e) => setForm({ ...form, agenda: e.target.value })} />
+          </div>
+          <div>
+            <label className="label-text text-xs uppercase tracking-widest text-[--on-surface-variant] block mb-2">Meeting Link (Google Meet / Zoom)</label>
+            <input className="w-full p-3 border border-[--outline-variant] rounded-xl focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary] outline-none text-sm" placeholder="https://meet.google.com/..." value={form.meetingLink} onChange={(e) => setForm({ ...form, meetingLink: e.target.value })} />
+          </div>
+          <button type="submit" disabled={submitting} className="w-full py-4 bg-[--primary] text-white rounded-xl font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50">
+            {submitting ? 'Scheduling...' : 'Schedule Meeting'}
+          </button>
+        </form>
+      </Modal>
+    </AppLayout>
+  );
 }
